@@ -219,7 +219,7 @@ export const SkillsInfo = [
       description:
         "A React-based web application that provides movie recommendations based on different criteria, such as genres, user preferences, and popular trends. The intuitive design and smooth experience make it a go-to app for movie enthusiasts.",
       image: movierecLogo,
-      tags: ["React JS", "REST API", "HTML", "CSS", "JavaScript"],
+      tags: ["React JS", "REST API", "HTML", "Tailwind CSS", "JavaScript"],
       github: "https://github.com/Faiz123760/Movie-Recommendation-System",
       webapp: "https://movie-recommendation-system-coral-nine.vercel.app/",
     },
@@ -229,7 +229,7 @@ export const SkillsInfo = [
       description:
         "The LeetCode Stats Dashboard is a full-stack web application developed using the MERN stack (MongoDB, Express.js, React.js, and Node.js) that provides a visual and analytical overview of a user’s LeetCode problem-solving performance. The application fetches and processes LeetCode statistics to display metrics such as total problems solved, difficulty-wise distribution, submission trends, and progress insights through interactive charts and dashboards. It helps users track consistency, analyze strengths and weaknesses, and monitor improvement over time. This project demonstrates skills in API integration, data aggregation, backend processing, and frontend data visualization.",
       image: leetcode,
-      tags: ["React JS", "Node JS", "Express JS", "Validation", "JavaScript", "Git", "GitHub","ApexCharts","Chart.js"],
+      tags: ["React JS", "Node JS", "Validation", "JavaScript", "Git", "GitHub","ApexCharts","Chart.js","Taulwind CSS"],
       github: "https://github.com/Faiz123760/Leetcode-Stats-Dashboard",
       webapp: "https://leetcode-stats-dashboard.vercel.app/",
     },
@@ -239,7 +239,7 @@ export const SkillsInfo = [
       description:
         "The Paste App is a full-stack web application developed using the MERN stack (MongoDB, Express.js, React.js, and Node.js) that allows users to create, store, and share text or code snippets securely. Users can generate unique shareable links for pastes, making it easy to collaborate or reference content. The application supports features such as syntax-friendly text input, paste management, and secure data handling. This project demonstrates strong understanding of RESTful APIs, database design, and frontend–backend integration in a scalable web application.",
       image: pasteApp,
-      tags: ["JavaScript", "Git","Express JS", "Tailwind CSS","Github","React JS","MongoDB","Node JS"],
+      tags: ["JavaScript", "Git", "Tailwind CSS","Github","React JS"],
       github: "https://github.com/Faiz123760/PasteApp",
       webapp: "https://paste-app-gold-kappa.vercel.app/",
     },
@@ -260,7 +260,7 @@ export const SkillsInfo = [
       description:
         "A React.js-based image search application that allows users to search and download high-quality images from the web. Built using external APIs to ensure a vast library of results for various queries.",
       image: imagesearchLogo,
-      tags: ["React JS", "REST API", "Search Feature", "CSS", "Javascript"],
+      tags: ["REST API", "HTML", "Search Engine", "CSS", "Javascript"],
       github: "https://github.com/Faiz123760/Image-Search-app",
       webapp: "https://e-waste-management-uan3.vercel.app/",
     },
