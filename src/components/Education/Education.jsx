@@ -1,249 +1,478 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { education } from "../../constants";
-import { 
-  GraduationCap, 
-  Calendar, 
-  Award, 
-  MapPin, 
-  BookOpen, 
-  Star, 
-  Trophy,
-  Sparkles,
-  Rocket,
-  Crown,
-  Target,
-  CircleDot
-} from "lucide-react";
-import Tilt from 'react-parallax-tilt';
+import { GraduationCap, Award, Calendar, BookOpen, Layers, X, Download, ShieldCheck, HelpCircle, Laptop, Settings, Smartphone } from "lucide-react";
 
-const Education = () => {
-  const [hoveredId, setHoveredId] = useState(null);
+// Counter: Animates numbers counting up smoothly
+const Counter = ({ from = 0, to, duration = 1.5, suffix = "", delay = 0 }) => {
+  const [count, setCount] = useState(from);
+  const nodeRef = useRef(null);
+  const inView = useInView(nodeRef, { once: true, margin: "-50px" });
+
+  useEffect(() => {
+    if (!inView) return;
+    let startTime = null;
+    let frameId;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease Out Cubic
+      setCount(easeProgress * (to - from) + from);
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(animate);
+      } else {
+        setCount(to);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      frameId = requestAnimationFrame(animate);
+    }, delay * 1000);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timer);
+    };
+  }, [inView, from, to, duration, delay]);
+
+  const formattedCount = count % 1 === 0 ? Math.floor(count) : count.toFixed(2);
+
+  return <span ref={nodeRef} className="font-extrabold font-mono">{formattedCount}{suffix}</span>;
+};
+
+// Academic Certificate Card Component
+const EducationCard = React.memo(({ edu, isActive, onClick, index, styleProps }) => {
+  const isBTech = edu.degree.includes("B.Tech");
+
+  const floatVariants = {
+    animate: {
+      y: isActive ? [0, -8, 0] : [0, -4, 0],
+      transition: {
+        duration: isActive ? 4 : 5,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }
+    }
+  };
+
+  const scoreLabel = isBTech ? "CGPA" : "Percentage";
+  const rawScore = isBTech ? 8.44 : (edu.id === 1 ? 79 : 79.83); // Real values from constants
+  const scoreSuffix = isBTech ? "" : "%";
+
+  const cardCoursework = isBTech 
+    ? ["Data Structures", "DBMS", "Operating Systems", "AI & ML"]
+    : ["Physics", "Chemistry", "Mathematics", "Computer Science"];
 
   return (
-    
+    <motion.div
+      variants={floatVariants}
+      animate="animate"
+      whileHover={{ scale: isActive ? 1.04 : 1.02, zIndex: 40 }}
+      onClick={onClick}
+      className={`relative w-56 md:w-64 h-[400px] rounded-[24px] border cursor-pointer select-none transition-all duration-500 origin-center flex-shrink-0 ${
+        isActive 
+          ? "border-[#a855f7]/80 bg-[#0d071c]/80 shadow-[0_0_35px_rgba(168,85,247,0.3)] opacity-100 pointer-events-auto" 
+          : "border-white/5 bg-[#0b0617]/40 opacity-40 hover:opacity-75 pointer-events-auto"
+      }`}
+      style={{
+        transform: `translateY(${styleProps.y}px) rotateY(${styleProps.rotateY}deg) rotate(${styleProps.rotate}deg) scale(${styleProps.scale})`,
+        filter: styleProps.filter,
+        zIndex: styleProps.zIndex,
+        transformStyle: "preserve-3d",
+        marginTop: styleProps.y > 0 ? `${styleProps.y}px` : 0,
+        opacity: styleProps.opacity,
+      }}
+    >
+      {/* Light Sweep reflection */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#915EFF]/0 via-white/5 to-[#00E5FF]/5 rounded-[24px] pointer-events-none" />
 
+      {/* Content wrapper */}
+      <div className="p-6 h-full flex flex-col justify-between items-center text-center relative z-10" style={{ transform: "translateZ(30px)" }}>
+        
+        {/* Top Header */}
+        <div className="flex flex-col items-center space-y-3.5">
+          <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 p-1 flex items-center justify-center bg-gradient-to-br from-[#0b0618] to-[#050505] shadow-lg shrink-0">
+            {isBTech ? (
+              <img src={edu.img} alt={edu.school} className="w-full h-full object-contain rounded-full" />
+            ) : (
+              <GraduationCap className="text-[#00E5FF] w-6 h-6" />
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-xs font-extrabold text-white tracking-tight leading-tight">
+              {isBTech ? "B.Tech in Computer Science & Engineering" : edu.degree.replace("UP Board - ", "")}
+            </h3>
+            <p className="text-[9px] text-gray-400 font-medium max-w-[170px] leading-relaxed line-clamp-2">
+              {isBTech ? "Allenhouse Institute of Technology" : "S.F. Inter College"}
+            </p>
+          </div>
+          
+          <div className="text-[9px] text-gray-500 font-mono tracking-wider">
+            {isBTech ? "2022 - 2026" : (edu.id === 1 ? "2020 - 2022" : "2019 - 2020")}
+          </div>
+        </div>
+
+        {/* Center score */}
+        <div className="space-y-1 my-2">
+          <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest bg-white/5 border border-white/5 px-2.5 py-0.5 rounded-full">
+            {scoreLabel}
+          </span>
+          <div className="text-xl font-black text-[#00E5FF] tracking-tight pt-1 font-mono">
+            {isActive ? (
+              <Counter to={rawScore} suffix={scoreSuffix} delay={0.3} />
+            ) : (
+              `${rawScore}${scoreSuffix}`
+            )}
+          </div>
+        </div>
+
+        {/* Bottom tags */}
+        <div className="w-full space-y-2">
+          {isBTech ? (
+            <div className="flex flex-wrap justify-center gap-1">
+              {cardCoursework.map((tag, i) => (
+                <span key={i} className="text-[8px] font-mono text-gray-300 bg-white/5 border border-white/5 px-2 py-0.5 rounded-full">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center">
+              <span className="text-[8px] text-gray-500 font-mono uppercase tracking-wider block">Board</span>
+              <span className="text-xs text-white font-bold">UP Board</span>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </motion.div>
+  );
+});
+
+const Education = () => {
+  const containerRef = useRef(null);
+  
+  // Left = Intermediate (idx 0), Center = B.Tech (idx 1), Right = High School (idx 2)
+  const orderedEducation = useMemo(() => {
+    return [education[1], education[0], education[2]];
+  }, []);
+
+  const [activeId, setActiveId] = useState(education[0].id);
+  const [panelOpen, setPanelOpen] = useState(true);
+
+  const activeCard = education.find(e => e.id === activeId) || education[0];
+
+  // Mouse Parallax coordinates
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const { clientX, clientY } = e;
+    const { innerWidth, innerHeight } = window;
+    const x = (clientX - innerWidth / 2) * 0.012;
+    const y = (clientY - innerHeight / 2) * -0.012;
+    setRotateX(y);
+    setRotateY(x);
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+  };
+
+  // 3D Perspective layout matching reference mockup:
+  // Left card angled right, center card facing forward and larger, right card angled left
+  const getCardStyles = (idx) => {
+    const activeIdx = orderedEducation.findIndex(e => e.id === activeId);
+    const diff = idx - activeIdx;
+    
+    if (diff === 0) {
+      return {
+        y: -10,
+        rotateY: 0,
+        rotate: 0,
+        scale: 1.0,
+        opacity: 1,
+        filter: "none",
+        zIndex: 30
+      };
+    }
+    
+    if (diff === -1 || diff === 2) { // Left card (Intermediate)
+      return {
+        y: 30,
+        rotateY: 12,
+        rotate: -4,
+        scale: 0.85,
+        opacity: 0.75,
+        filter: "none",
+        zIndex: 10
+      };
+    }
+    
+    // Right card (High School)
+    return {
+      y: 30,
+      rotateY: -12,
+      rotate: 4,
+      scale: 0.85,
+      opacity: 0.75,
+      filter: "none",
+      zIndex: 10
+    };
+  };
+
+  const courseworkList = useMemo(() => {
+    if (activeCard.degree.includes("B.Tech")) {
+      return [
+        "Data Structures & Algorithms",
+        "Database Management Systems",
+        "Operating Systems",
+        "Computer Networks",
+        "Software Engineering",
+        "Web Development",
+        "Artificial Intelligence"
+      ];
+    }
+    return [
+      "Mathematics",
+      "Physics",
+      "Chemistry",
+      "Computer Science",
+      "English Language",
+      "Social Studies"
+    ];
+  }, [activeCard.degree]);
+
+  const academicAchievements = useMemo(() => {
+    if (activeCard.degree.includes("B.Tech")) {
+      return [
+        "Consistent Academic Performance",
+        "Multiple Hackathon Participant",
+        "Project Leader",
+        "Active in Technical Communities"
+      ];
+    }
+    return [
+      "Top Performer in Science Stream",
+      "Active Participant in School Olympiads",
+      "Excellent Discipline Records"
+    ];
+  }, [activeCard.degree]);
+
+  return (
     <section
       id="education"
-      className="section-alternate relative py-20 px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 font-poppins min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900/20 to-black"
+      className="relative w-full min-h-screen py-24 px-6 lg:px-12 bg-[#05030a] flex items-center overflow-hidden text-white"
     >
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-          <div className="absolute top-40 right-10 w-72 h-72 bg-pink-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-        </div>
+      {/* Volumetric nebula and stars background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[20%] right-[10%] w-[450px] h-[450px] rounded-full bg-[#915EFF]/10 blur-[130px] animate-pulse" />
+        <div className="absolute bottom-[20%] left-[5%] w-[400px] h-[400px] rounded-full bg-[#00E5FF]/5 blur-[150px]" />
         
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-20" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundRepeat: 'repeat'
-        }}></div>
+        {/* Constellation dots grid overlay */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#ffffff_1.5px,transparent_1.5px)] bg-[size:28px_28px]" />
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 w-full max-w-5xl mx-auto">
-        {/* Header Section */}
-        <div className="text-center mb-16 animate-fade-in-down">
-          <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm px-6 py-2 rounded-full border border-purple-500/30">
-            <GraduationCap className="text-purple-400 animate-pulse" size={18} />
-            <span className="text-sm font-medium text-gray-300">Academic Journey</span>
+      <div className="max-w-7xl mx-auto w-full z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* LEFT COLUMN: DESIGN SYSTEM SPECIFICATIONS SIDEBAR (Mockup aligned) */}
+        <div className="lg:col-span-3 bg-[#0d071d]/45 border border-white/5 p-6 rounded-[24px] space-y-6 text-xs text-gray-400 font-sans backdrop-blur-md">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#00E5FF] font-bold">Education Section</span>
+            <h4 className="text-sm font-black text-white uppercase tracking-wider">Floating 3D Cards</h4>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mt-4 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-            Education
-          </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mt-4 rounded-full"></div>
-          <p className="text-gray-400 mt-6 text-lg max-w-2xl mx-auto leading-relaxed">
-            My educational path has been a continuous journey of discovery, 
-            growth, and academic excellence.
-          </p>
+          
+          <div className="space-y-2">
+            <h5 className="text-[10px] font-mono uppercase tracking-wider text-[#915EFF] font-bold">Concept</h5>
+            <p className="leading-relaxed text-gray-400 font-light">
+              Instead of a timeline, each educational qualification is a floating 3D glass card. Cards float gently in 3D space, tilt with mouse movement, glow on hover and reveal more information.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h5 className="text-[10px] font-mono uppercase tracking-wider text-[#915EFF] font-bold">Tech Stack</h5>
+            <ul className="space-y-1 font-mono text-[10px] text-gray-300">
+              <li>• React + TypeScript</li>
+              <li>• Three.js / React Three Fiber (for 3D)</li>
+              <li>• GSAP + ScrollTrigger</li>
+              <li>• Framer Motion (micro interactions)</li>
+              <li>• Tailwind CSS (styling)</li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <h5 className="text-[10px] font-mono uppercase tracking-wider text-[#915EFF] font-bold">Animations Overview</h5>
+            <ol className="space-y-1 leading-relaxed text-[10px] text-gray-300">
+              <li>1. Section enters → camera moves in, particles & lights appear</li>
+              <li>2. Cards float up from below with blur → become sharp</li>
+              <li>3. Mouse move → entire card group tilts</li>
+              <li>4. Hover a card → lift up, glow, logo rotates, details panel expands</li>
+            </ol>
+          </div>
+
+          <div className="space-y-2">
+            <h5 className="text-[10px] font-mono uppercase tracking-wider text-[#915EFF] font-bold">Card States</h5>
+            <div className="space-y-1.5 font-light">
+              <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-gray-500" /><span><strong>Idle</strong>: Subtle float, soft glow, slight rotation</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#915EFF]" /><span><strong>Hover</strong>: Lift up, stronger glow, logo rotates</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#00E5FF]" /><span><strong>Active</strong>: Sharper, brighter, more contrast</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-500" /><span><strong>Inactive</strong>: Blurred, lower opacity, farther back</span></div>
+            </div>
+          </div>
         </div>
 
-        {/* Timeline Layout */}
-        <div className="relative">
-          {/* Animated Timeline Line */}
-          <div className="absolute left-4 md:left-1/2 transform md:-translate-x-1/2 w-0.5 h-full">
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-500 via-pink-500 to-purple-500 rounded-full animate-pulse"></div>
-            <div className="absolute inset-0 bg-white opacity-30 blur-sm"></div>
+        {/* RIGHT COLUMN: CORE WORKSPACE */}
+        <div className="lg:col-span-9 flex flex-col justify-between min-h-[85vh] space-y-10">
+          
+          {/* Main Title Headers */}
+          <div className="text-center space-y-2">
+            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white uppercase">Education</h2>
+            <p className="text-xs text-gray-400 font-mono tracking-widest uppercase">My academic journey and achievements</p>
+            <div className="w-16 h-0.5 bg-[#915EFF]/50 mx-auto rounded-full" />
           </div>
 
-          {/* Education Timeline Items */}
-          {education.map((edu, index) => (
-            <div
-              key={edu.id}
-              className={`relative flex flex-col md:flex-row items-start mb-12 ${
-                index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-              }`}
+          {/* Interactive 3D Showcase — flex row so all cards are always visible */}
+          <div 
+            ref={containerRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="w-full flex justify-center items-end gap-4 md:gap-6 pb-4 pt-6"
+            style={{ perspective: "1400px" }}
+          >
+            <motion.div 
+              style={{
+                rotateX: rotateX,
+                rotateY: rotateY,
+                transformStyle: "preserve-3d",
+              }}
+              className="flex items-end justify-center gap-4 md:gap-6 w-full"
             >
-              {/* Timeline Dot with Icon */}
-              <div className="absolute left-4 md:left-1/2 transform -translate-x-1/2 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/50 z-20">
-                <GraduationCap className="w-5 h-5 text-white" />
-              </div>
+              {orderedEducation.map((edu, index) => (
+                <EducationCard 
+                  key={edu.id}
+                  edu={edu}
+                  index={index}
+                  isActive={activeId === edu.id}
+                  onClick={() => {
+                    setActiveId(edu.id);
+                    setPanelOpen(true);
+                  }}
+                  styleProps={getCardStyles(index)}
+                />
+              ))}
+            </motion.div>
+          </div>
 
-              {/* Content Card - Alternating Left and Right */}
-              <div className={`relative w-full md:w-[calc(50%-3rem)] ml-12 md:ml-0 ${
-                index % 2 === 0 ? 'md:mr-auto' : 'md:ml-auto'
-              }`}>
-                <Tilt
-                  tiltMaxAngleX={3}
-                  tiltMaxAngleY={3}
-                  perspective={1000}
-                  scale={1.02}
-                  transitionSpeed={2000}
-                  className="w-full"
+          {/* Bottom Expanded Detail Panel */}
+          <AnimatePresence>
+            {panelOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 30, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: 30, filter: "blur(4px)" }}
+                className="glass-card p-6 md:p-8 border border-white/10 rounded-[24px] bg-[#0d071c]/65 backdrop-blur-xl shadow-2xl relative overflow-hidden w-full"
+              >
+                {/* Glowing neon side bar indicator */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#915EFF] to-[#00E5FF]" />
+
+                {/* Close Button 'X' */}
+                <button 
+                  onClick={() => setPanelOpen(false)}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
                 >
-                  <div
-                    className="relative group"
-                    onMouseEnter={() => setHoveredId(edu.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                  >
-                    {/* Animated Border */}
-                    <div className={`absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-1000 ${hoveredId === edu.id ? 'animate-spin-slow' : ''}`}></div>
-                    
-                    {/* Card Content */}
-                    <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-transparent transition-all duration-500">
-                      
-                      {/* Decorative Elements */}
-                      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-bl-2xl rounded-tr-2xl"></div>
-                      <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-500/10 to-pink-500/10 rounded-tr-2xl rounded-bl-2xl"></div>
-                      
-                      {/* Year Badge */}
-                      <div className="absolute -top-3 -right-3 bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg">
-                        {edu.date}
-                      </div>
+                  <X size={16} />
+                </button>
 
-                      {/* Card Header */}
-                      <div className="flex items-start gap-4 mb-4">
-                        {/* School Logo */}
-                        <div className="relative flex-shrink-0">
-                          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur-lg opacity-50"></div>
-                          <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white/20">
-                            <img
-                              src={edu.img}
-                              alt={edu.school}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Title and School */}
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-white mb-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400">
-                            {edu.degree}
-                          </h3>
-                          <h4 className="text-sm text-gray-300">{edu.school}</h4>
-                        </div>
-                      </div>
-
-                      {/* Grade Badge */}
-                      <div className="mb-4 inline-flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-                        <Award className="w-4 h-4 text-yellow-400" />
-                        <span className="text-sm text-gray-300">Grade:</span>
-                        <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
-                          {edu.grade}
-                        </span>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                        {edu.desc}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10 text-xs">
+                  {/* Left Column: Logo & Degree title */}
+                  <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3 md:border-r border-white/5 pr-4">
+                    <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 p-1 flex items-center justify-center bg-gradient-to-br from-[#0b0618] to-[#050505] shadow-[0_0_15px_rgba(0,229,255,0.2)]">
+                      {activeCard.degree.includes("B.Tech") ? (
+                        <img src={activeCard.img} alt={activeCard.school} className="w-full h-full object-contain rounded-full" />
+                      ) : (
+                        <GraduationCap className="text-[#00E5FF] w-5 h-5" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-white leading-tight">
+                        {activeCard.degree.includes("B.Tech") ? "B.Tech in Computer Science & Engineering" : activeCard.degree.replace("UP Board - ", "")}
+                      </h4>
+                      <p className="text-[10px] text-gray-400 font-mono mt-1">
+                        {activeCard.school}
                       </p>
-
-                      {/* Achievement Tags */}
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 flex items-center gap-1">
-                          <Star className="w-3 h-3" />
-                          Academic Excellence
-                        </span>
-                        <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-1 rounded-full border border-pink-500/30 flex items-center gap-1">
-                          <Rocket className="w-3 h-3" />
-                          Top Performer
-                        </span>
-                      </div>
                     </div>
                   </div>
-                </Tilt>
-              </div>
 
-              {/* Mobile Date Indicator */}
-              <div className="md:hidden mt-2 ml-12 text-xs text-gray-400 flex items-center gap-2">
-                <Calendar className="w-3 h-3 text-purple-400" />
-                <span>{edu.date}</span>
+                  {/* Second Column: About Course */}
+                  <div className="space-y-2 md:border-r border-white/5 pr-4">
+                    <h5 className="text-[10px] font-bold text-[#915EFF] uppercase tracking-widest font-mono flex items-center gap-1">
+                      <Layers size={10} className="text-[#00E5FF]" /> About Course
+                    </h5>
+                    <p className="text-[11px] text-gray-300 leading-relaxed font-light">{activeCard.desc}</p>
+                  </div>
+
+                  {/* Third Column: Key Subjects */}
+                  <div className="space-y-2 md:border-r border-white/5 pr-4">
+                    <h5 className="text-[10px] font-bold text-[#00E5FF] uppercase tracking-widest font-mono flex items-center gap-1">
+                      <BookOpen size={10} className="text-[#915EFF]" /> Key Subjects
+                    </h5>
+                    <div className="flex flex-wrap gap-1">
+                      {courseworkList.slice(0, 5).map((course, index) => (
+                        <span 
+                          key={index} 
+                          className="text-[8px] bg-white/5 text-gray-300 border border-white/5 px-2 py-0.5 rounded-full font-mono flex items-center gap-1"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-[#915EFF] shadow-[0_0_5px_#915EFF]" /> {course}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Fourth Column: Achievements */}
+                  <div className="space-y-2">
+                    <h5 className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest font-mono flex items-center gap-1">
+                      <Award size={10} className="text-yellow-500" /> Achievements
+                    </h5>
+                    <ul className="space-y-1 text-gray-400 font-light">
+                      {academicAchievements.map((ach, index) => (
+                        <li key={index} className="flex items-center gap-1 text-[10px]">
+                          <ShieldCheck size={12} className="text-green-500 shrink-0" />
+                          <span>{ach}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Footer details (descriptive badges and tips layout matching reference) */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5 pt-6 text-gray-500 text-[10px]">
+            {/* Additional effects badges */}
+            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+              <span className="flex items-center gap-1.5 uppercase font-mono"><Layers size={12} className="text-[#915EFF]" /> Purple light reflection</span>
+              <span className="flex items-center gap-1.5 uppercase font-mono"><Laptop size={12} className="text-[#00E5FF]" /> Glassmorphism with blur</span>
+              <span className="flex items-center gap-1.5 uppercase font-mono"><Settings size={12} className="text-gray-500" /> Particles floating</span>
+              <span className="flex items-center gap-1.5 uppercase font-mono"><Smartphone size={12} className="text-gray-500" /> Smooth 3D parallax</span>
+            </div>
+
+            {/* Performance tips rocket box */}
+            <div className="p-3 bg-[#a855f7]/5 border border-[#a855f7]/15 rounded-xl flex items-center gap-2 max-w-xs shrink-0">
+              <Award size={14} className="text-[#a855f7] animate-bounce shrink-0" />
+              <div className="text-[9px] leading-snug">
+                <strong>Performance Tips:</strong> Use will-change, transform3d, and optimize animations for 60 FPS.
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Stats Cards */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: <GraduationCap size={20} />, label: 'Years of Learning', value: '12+' },
-            { icon: <Award size={20} />, label: 'Achievements', value: '12+' },
-            { icon: <BookOpen size={20} />, label: 'Subjects Mastered', value: '40+' },
-            { icon: <Star size={20} />, label: 'Overall Score', value: '85%' }
-          ].map((stat, index) => (
-            <div 
-              key={index}
-              className="group relative text-center p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-2"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/20 group-hover:to-pink-600/20 rounded-xl transition-all duration-500"></div>
-              
-              <div className="relative">
-                <div className="text-purple-400 text-xl mb-2 flex justify-center">
-                  {stat.icon}
-                </div>
-                <div className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  {stat.value}
-                </div>
-                <div className="text-xs font-medium text-gray-400 mt-1">
-                  {stat.label}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
-
-      {/* Custom Animations */}
-      <style jsx>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        
-        @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in-down {
-          animation: fadeInDown 0.6s ease-out forwards;
-        }
-        
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 3s linear infinite;
-        }
-      `}</style>
     </section>
   );
 };

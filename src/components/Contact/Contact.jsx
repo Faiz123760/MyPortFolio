@@ -1,337 +1,261 @@
-import React, { useRef, useState } from "react";
-import emailjs from "@emailjs/browser";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { 
-  Mail, 
-  User, 
-  MessageSquare, 
-  Send, 
-  Sparkles,
-  CheckCircle,
-  Clock,
-  MapPin,
-  Phone,
-  Globe,
-  ArrowRight,
-  Loader2
-} from "lucide-react";
-import Tilt from 'react-parallax-tilt';
+import Scene from "../three/Scene";
+import PaperPlaneModel from "../three/PaperPlaneModel";
+import { Mail, User, MessageSquare, Send, Sparkles, Phone, MapPin, Linkedin, Github } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Zod Form Schema Validation
+const contactSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  subject: z.string().min(3, "Subject must be at least 3 characters"),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+});
 
 const Contact = () => {
-  const form = useRef();
   const [isSending, setIsSending] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const sendEmail = (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(contactSchema),
+  });
+
+  const onSubmit = async (data) => {
     setIsSending(true);
+    setIsSuccess(false);
 
-    emailjs
-      .sendForm(
-        "service_qme3bm4",  // Replace with your EmailJS Service ID
-        "template_umjq77n",  // Replace with your EmailJS Template ID
-        form.current,
-        "6hieIdj53rZ7OWBgM"  // Replace with your EmailJS Public Key
-      )
-      .then(
-        () => {
-          form.current.reset();
-          toast.success(
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-20 h-20 text-green-400" />
-              <div>
-                <p className="font-semibold">Message sent successfully!</p>
-                <p className="text-xs opacity-90">I'll get back to you soon.</p>
-              </div>
-            </div>,
-            {
-              position: "top-right",
-              autoClose: 4000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              theme: "dark",
-              icon: false,
-            }
-          );
-        },
-        (error) => {
-          console.error("Error sending message:", error);
-          toast.error(
-            <div className="flex items-center gap-3">
-              <div className="w-5 h-5 text-red-400">!</div>
-              <div>
-                <p className="font-semibold">Failed to send message</p>
-                <p className="text-xs opacity-90">Please try again later.</p>
-              </div>
-            </div>,
-            {
-              position: "top-right",
-              autoClose: 4000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              theme: "dark",
-              icon: false,
-            }
-          );
-        }
-      )
-      .finally(() => {
-        setIsSending(false);
+    try {
+      const backendBaseUrl = import.meta.env.PROD 
+        ? "https://myportfolio-backend-kw19.onrender.com" 
+        : "";
+      const response = await fetch(`${backendBaseUrl}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to dispatch email.");
+      }
+
+      setIsSuccess(true);
+      reset();
+      toast.success("Connection secure. Message transmitted!", {
+        theme: "dark",
+        position: "top-right",
+      });
+
+      // Reset plane launch state after animation finishes
+      setTimeout(() => {
+        setIsSuccess(false);
+      }, 4000);
+
+    } catch (error) {
+      console.error("SMTP contact error:", error);
+      toast.error(error.message || "Failed to establish connection. Retry.", {
+        theme: "dark",
+        position: "top-right",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
-  const contactInfo = [
-    { icon: <Mail size={18} />, label: 'Email', value: 'faiz47532@gmail.com', link: 'mailto:faiz47532@gmail.com' },
-    { icon: <Phone size={18} />, label: 'Phone', value: '+91 8795412711', link: 'tel:+918795412711' },
-    { icon: <MapPin size={18} />, label: 'Location', value: 'India', link: null },
-    { icon: <Globe size={18} />, label: 'Working Hours', value: 'Mon-Fri, 9AM-6PM IST', link: null }
+  const socialLinks = [
+    { icon: <Mail className="w-5 h-5 text-[#00E5FF]" />, label: "Email", value: "faiz47532@gmail.com", href: "mailto:faiz47532@gmail.com" },
+    { icon: <Phone className="w-5 h-5 text-orange-500" />, label: "Phone", value: "+91-8795412711", href: "tel:+918795412711" },
+    { icon: <MapPin className="w-5 h-5 text-[#915EFF]" />, label: "Location", value: "Kanpur, India", href: "#" },
+    { icon: <Linkedin className="w-5 h-5 text-[#00E5FF]" />, label: "LinkedIn", value: "Mohd Faiz", href: "https://www.linkedin.com/in/mohd-faiz-0493bb2a7/" },
+    { icon: <Github className="w-5 h-5 text-white" />, label: "GitHub", value: "Faiz123760", href: "https://github.com/Faiz123760" },
   ];
 
   return (
     <section
       id="contact"
-      className="section-alternate relative py-20 px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 font-poppins min-h-screen flex items-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden"
+      className="relative w-full min-h-screen py-24 px-6 lg:px-16 bg-[#050505] flex items-center overflow-hidden"
     >
-      {/* Decorative Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-600 rounded-full opacity-10 blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-600 rounded-full opacity-10 blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-600 rounded-full opacity-5 blur-3xl"></div>
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-5" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundRepeat: 'repeat'
-        }}></div>
-      </div>
+      {/* Cybersecurity foggy grid background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(124,58,237,0.05),transparent_60%)] pointer-events-none" />
 
-      {/* Main Content */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto">
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm px-6 py-2 rounded-full border border-purple-500/30 mb-4">
-            <Sparkles className="text-purple-400" size={18} />
-            <span className="text-sm font-medium text-gray-300">Get In Touch</span>
+      <div className="max-w-6xl mx-auto w-full z-10 space-y-16">
+        {/* Header */}
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#915EFF]/10 border border-[#915EFF]/30 text-sm text-gray-300 font-mono">
+            <Sparkles size={16} className="text-[#915EFF] animate-pulse" /> Connection Portal
           </div>
-          
-          <h2 className="text-4xl md:text-5xl font-bold mt-4 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-            Contact Me
+          <h2 className="section-title mt-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-[#00E5FF] font-mono tracking-tight">
+            CONTACT ME
           </h2>
-          
-          <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mt-4 rounded-full"></div>
-          
-          <p className="text-gray-400 mt-6 text-lg max-w-2xl mx-auto leading-relaxed">
-            I'd love to hear from you—reach out for any opportunities or questions!
+          <p className="text-xs lg:text-sm text-gray-400 max-w-md mx-auto mt-3 font-sans">
+            Let's build something amazing together.
           </p>
+          <div className="w-20 h-1 bg-gradient-to-r from-[#915EFF] to-[#00E5FF] mx-auto mt-4 rounded-full shadow-[0_0_8px_rgba(0,229,255,0.3)]" />
         </div>
 
-        {/* Contact Content */}
-        <div className="grid lg:grid-cols-2 gap-8 items-start">
-          {/* Left Side - Contact Info Cards */}
-          <div className="space-y-6">
-            <Tilt
-              tiltMaxAngleX={3}
-              tiltMaxAngleY={3}
-              perspective={1000}
-              scale={1.02}
-              transitionSpeed={1500}
-              className="w-full"
-            >
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-                <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Clock className="text-purple-400" />
-                  Quick Contact Info
-                </h3>
-                
-                <div className="space-y-4">
-                  {contactInfo.map((item, index) => (
-                    <div key={index} className="group">
-                      {item.link ? (
-                        <a
-                          href={item.link}
-                          className="flex items-center gap-4 p-4 bg-gray-700/30 rounded-xl border border-white/5 hover:border-purple-500/50 transition-all duration-300 hover:bg-gray-700/50"
-                        >
-                          <div className="w-10 h-10 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform duration-300">
-                            {item.icon}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-400">{item.label}</p>
-                            <p className="text-sm text-white group-hover:text-purple-400 transition-colors duration-300">
-                              {item.value}
-                            </p>
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-purple-400 group-hover:translate-x-1 transition-all duration-300" />
-                        </a>
-                      ) : (
-                        <div className="flex items-center gap-4 p-4 bg-gray-700/30 rounded-xl border border-white/5">
-                          <div className="w-10 h-10 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center text-purple-400">
-                            {item.icon}
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-400">{item.label}</p>
-                            <p className="text-sm text-white">{item.value}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Tilt>
-
-            {/* Availability Badge */}
-            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                  <div className="absolute inset-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-75"></div>
-                </div>
-                <p className="text-sm text-gray-300">
-                  <span className="font-semibold text-white">Available for opportunities</span> — Let's talk!
-                </p>
-              </div>
+        {/* Content grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+          {/* Left Column: 3D Flight Scene */}
+          <div className="w-full min-h-[300px] lg:min-h-[450px] relative border border-white/5 rounded-3xl bg-[#0b0618]/25 backdrop-blur-sm overflow-hidden flex items-center justify-center shadow-[inset_0_0_30px_rgba(145,94,255,0.05)]">
+            <Scene enableZoom={false} cameraPos={[0, 0, 2.5]}>
+              <PaperPlaneModel isSending={isSending} isSuccess={isSuccess} />
+            </Scene>
+            
+            <div className="absolute bottom-4 left-6 text-[9px] text-gray-500 font-mono uppercase tracking-widest pointer-events-none z-10">
+              Interactive 3D Comms Hub • Drag to orbit
             </div>
+
+            {/* Holographic MESSAGE SENT overlay */}
+            <AnimatePresence>
+              {isSuccess && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-[#050505]/70 backdrop-blur-sm flex flex-col items-center justify-center z-20"
+                >
+                  <div className="w-16 h-16 rounded-full border-2 border-orange-500/50 flex items-center justify-center animate-spin-slow mb-4 shadow-[0_0_20px_rgba(255,87,34,0.3)]">
+                    <Send className="w-6 h-6 text-[#00E5FF]" />
+                  </div>
+                  <span className="text-sm font-bold font-mono tracking-widest text-[#00E5FF] uppercase animate-pulse">
+                    MESSAGE DISPATCHED
+                  </span>
+                  <span className="text-[10px] text-gray-400 mt-2 font-mono">
+                    Return coordinates established.
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Right Side - Contact Form */}
-          <Tilt
-            tiltMaxAngleX={3}
-            tiltMaxAngleY={3}
-            perspective={1000}
-            scale={1.02}
-            transitionSpeed={1500}
-            className="w-full"
-          >
-            <div className="relative group">
-              {/* Border Glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
-              
-              {/* Form Container */}
-              <div className="relative bg-gray-800/90 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-                <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                  <MessageSquare className="text-purple-400" />
-                  Send a Message
-                </h3>
+          {/* Right Column: Premium Contact Form */}
+          <div className="flex flex-col justify-between space-y-8">
+            <div className="glass-card p-8 border border-white/5 bg-[#0b0618]/30 backdrop-blur-md rounded-3xl shadow-[0_30px_60px_rgba(0,0,0,0.4)] relative overflow-hidden">
+              <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-2 font-mono tracking-tight">
+                <Mail className="text-[#00E5FF]" /> TRANSMIT MESSAGE
+              </h3>
 
-                <form ref={form} onSubmit={sendEmail} className="space-y-5">
-                  {/* Name Input */}
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <User size={18} />
-                    </div>
-                    <input
-                      type="text"
-                      name="user_name"
-                      placeholder="Your Name"
-                      required
-                      className="w-full pl-12 pr-4 py-3 bg-gray-700/50 rounded-xl text-white placeholder-gray-400 border border-white/10 focus:border-purple-500 focus:outline-none transition-all duration-300"
-                    />
-                  </div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Name */}
+                <div className="relative z-0 w-full group">
+                  <input
+                    type="text"
+                    {...register("name")}
+                    placeholder=" "
+                    className={`block py-3 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-white/10 appearance-none focus:outline-none focus:ring-0 focus:border-[#00E5FF] peer transition-colors ${
+                      errors.name ? "border-red-500" : ""
+                    }`}
+                  />
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-[#00E5FF] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center gap-2">
+                    <User size={14} /> Name
+                  </label>
+                  {errors.name && (
+                    <span className="text-[10px] text-red-400 font-mono mt-1 block">{errors.name.message}</span>
+                  )}
+                </div>
 
-                  {/* Email Input */}
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <Mail size={18} />
-                    </div>
-                    <input
-                      type="email"
-                      name="user_email"
-                      placeholder="Your Email"
-                      required
-                      className="w-full pl-12 pr-4 py-3 bg-gray-700/50 rounded-xl text-white placeholder-gray-400 border border-white/10 focus:border-purple-500 focus:outline-none transition-all duration-300"
-                    />
-                  </div>
+                {/* Email */}
+                <div className="relative z-0 w-full group">
+                  <input
+                    type="email"
+                    {...register("email")}
+                    placeholder=" "
+                    className={`block py-3 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-white/10 appearance-none focus:outline-none focus:ring-0 focus:border-[#00E5FF] peer transition-colors ${
+                      errors.email ? "border-red-500" : ""
+                    }`}
+                  />
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-[#00E5FF] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center gap-2">
+                    <Mail size={14} /> Email Address
+                  </label>
+                  {errors.email && (
+                    <span className="text-[10px] text-red-400 font-mono mt-1 block">{errors.email.message}</span>
+                  )}
+                </div>
 
-                  {/* Subject Input */}
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <MessageSquare size={18} />
-                    </div>
-                    <input
-                      type="text"
-                      name="subject"
-                      placeholder="Subject"
-                      required
-                      className="w-full pl-12 pr-4 py-3 bg-gray-700/50 rounded-xl text-white placeholder-gray-400 border border-white/10 focus:border-purple-500 focus:outline-none transition-all duration-300"
-                    />
-                  </div>
+                {/* Subject */}
+                <div className="relative z-0 w-full group">
+                  <input
+                    type="text"
+                    {...register("subject")}
+                    placeholder=" "
+                    className={`block py-3 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-white/10 appearance-none focus:outline-none focus:ring-0 focus:border-[#00E5FF] peer transition-colors ${
+                      errors.subject ? "border-red-500" : ""
+                    }`}
+                  />
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-[#00E5FF] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center gap-2">
+                    <MessageSquare size={14} /> Subject
+                  </label>
+                  {errors.subject && (
+                    <span className="text-[10px] text-red-400 font-mono mt-1 block">{errors.subject.message}</span>
+                  )}
+                </div>
 
-                  {/* Message Textarea */}
-                  <div className="relative">
-                    <div className="absolute left-4 top-4 text-gray-400">
-                      <MessageSquare size={18} />
-                    </div>
-                    <textarea
-                      name="message"
-                      placeholder="Your Message"
-                      rows="5"
-                      required
-                      className="w-full pl-12 pr-4 py-3 bg-gray-700/50 rounded-xl text-white placeholder-gray-400 border border-white/10 focus:border-purple-500 focus:outline-none transition-all duration-300 resize-none"
-                    />
-                  </div>
+                {/* Message */}
+                <div className="relative z-0 w-full group">
+                  <textarea
+                    {...register("message")}
+                    rows="3"
+                    placeholder=" "
+                    className={`block py-3 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-white/10 appearance-none focus:outline-none focus:ring-0 focus:border-[#00E5FF] peer transition-colors resize-none ${
+                      errors.message ? "border-red-500" : ""
+                    }`}
+                  />
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-[#00E5FF] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
+                    Write Message details...
+                  </label>
+                  {errors.message && (
+                    <span className="text-[10px] text-red-400 font-mono mt-1 block">{errors.message.message}</span>
+                  )}
+                </div>
 
-                  {/* Send Button */}
-                  <button
-                    type="submit"
-                    disabled={isSending}
-                    className="w-full relative overflow-hidden group/btn"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
-                    
-                    <div className="relative flex items-center justify-center gap-2 px-6 py-3 text-white font-semibold">
-                      {isSending ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Sending...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-5 h-5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform duration-300" />
-                          <span>Send Message</span>
-                        </>
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Form Footer */}
-                  <p className="text-xs text-center text-gray-400 mt-4">
-                    I'll get back to you within 24-48 hours.
-                  </p>
-                </form>
-              </div>
+                {/* Send Button */}
+                <button
+                  type="submit"
+                  disabled={isSending}
+                  className="w-full py-3.5 bg-gradient-to-r from-[#915EFF] to-[#A855F7] hover:scale-[1.01] hover:shadow-[0_0_20px_rgba(145,94,255,0.4)] transition-all text-white font-bold font-mono rounded-xl shadow-[0_0_15px_rgba(145,94,255,0.25)] flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                >
+                  <Send size={15} /> {isSending ? "ENCRYPTING & SENDING..." : "DISPATCH SYSTEM"}
+                </button>
+              </form>
             </div>
-          </Tilt>
+
+            {/* Social Grid cards below form */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {socialLinks.map((link, idx) => (
+                <a
+                  key={idx}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 bg-[#0b0618]/25 border border-white/5 hover:border-orange-500/30 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all hover:-translate-y-1 hover:bg-[#0b0618]/50 shadow-[0_4px_10px_rgba(0,0,0,0.2)] group"
+                >
+                  <div className="p-2 bg-white/[0.03] group-hover:bg-[#FF5722]/10 rounded-xl transition-colors">
+                    {link.icon}
+                  </div>
+                  <span className="text-[9px] uppercase font-mono tracking-widest text-gray-500 group-hover:text-gray-300">
+                    {link.label}
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-mono truncate max-w-full">
+                    {link.value}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Toast Container Customization */}
-      <ToastContainer
-        position="top-right"
-        autoClose={4000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-        toastStyle={{
-          background: '#1f2937',
-          color: '#fff',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          borderRadius: '12px',
-          padding: '16px',
-        }}
-        progressStyle={{
-          background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
-        }}
-      />
+      <ToastContainer />
     </section>
   );
 };

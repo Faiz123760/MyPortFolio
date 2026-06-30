@@ -1,0 +1,199 @@
+{
+  "hash": "ee6692fb",
+  "configHash": "80400b14",
+  "lockfileHash": "9b1f75b3",
+  "browserHash": "ffe960e1",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/.pnpm/react@19.2.7/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "e4831027",
+      "needsInterop": true
+    },
+    "react-dom": {
+      "src": "../../node_modules/.pnpm/react-dom@19.2.7_react@19.2.7/node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "08263622",
+      "needsInterop": true
+    },
+    "framer-motion": {
+      "src": "../../node_modules/.pnpm/framer-motion@12.42.0_react_c26bd5c51b778e2273121eba31d0844e/node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "fc508123",
+      "needsInterop": false
+    },
+    "three": {
+      "src": "../../node_modules/.pnpm/three@0.185.0/node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "a454614b",
+      "needsInterop": false
+    },
+    "@react-three/fiber": {
+      "src": "../../node_modules/.pnpm/@react-three+fiber@9.6.1_@t_3c09f18f542012a35a8afee8c59a5bc0/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js",
+      "file": "@react-three_fiber.js",
+      "fileHash": "f31abd19",
+      "needsInterop": false
+    },
+    "@react-three/drei": {
+      "src": "../../node_modules/.pnpm/@react-three+drei@10.7.7_@r_82ff24a05935cf76e3bdd893e133a42b/node_modules/@react-three/drei/index.js",
+      "file": "@react-three_drei.js",
+      "fileHash": "152b0ee6",
+      "needsInterop": false
+    },
+    "chart.js": {
+      "src": "../../node_modules/.pnpm/chart.js@4.5.1/node_modules/chart.js/dist/chart.js",
+      "file": "chart__js.js",
+      "fileHash": "45fc9e50",
+      "needsInterop": false
+    },
+    "react-chartjs-2": {
+      "src": "../../node_modules/.pnpm/react-chartjs-2@5.3.1_chart.js@4.5.1_react@19.2.7/node_modules/react-chartjs-2/dist/index.js",
+      "file": "react-chartjs-2.js",
+      "fileHash": "7ca09394",
+      "needsInterop": false
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/.pnpm/react@19.2.7/node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "4987bcf9",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../node_modules/.pnpm/react@19.2.7/node_modules/react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "2b210e77",
+      "needsInterop": true
+    },
+    "@hookform/resolvers/zod": {
+      "src": "../../node_modules/.pnpm/@hookform+resolvers@5.4.0_r_689d492cd461d34d6566a28aba3ec024/node_modules/@hookform/resolvers/zod/dist/zod.mjs",
+      "file": "@hookform_resolvers_zod.js",
+      "fileHash": "e3117986",
+      "needsInterop": false
+    },
+    "gsap": {
+      "src": "../../node_modules/.pnpm/gsap@3.15.0/node_modules/gsap/index.js",
+      "file": "gsap.js",
+      "fileHash": "1b8d6738",
+      "needsInterop": false
+    },
+    "gsap/ScrollTrigger": {
+      "src": "../../node_modules/.pnpm/gsap@3.15.0/node_modules/gsap/ScrollTrigger.js",
+      "file": "gsap_ScrollTrigger.js",
+      "fileHash": "b903e683",
+      "needsInterop": false
+    },
+    "lenis": {
+      "src": "../../node_modules/.pnpm/lenis@1.3.25_react@19.2.7/node_modules/lenis/dist/lenis.mjs",
+      "file": "lenis.js",
+      "fileHash": "69ec9936",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/.pnpm/lucide-react@0.564.0_react@19.2.7/node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "ee21f6b9",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/.pnpm/react-dom@19.2.7_react@19.2.7/node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "19f2f6fa",
+      "needsInterop": true
+    },
+    "react-fast-marquee": {
+      "src": "../../node_modules/.pnpm/react-fast-marquee@1.6.5_re_9a428b4784012dc61ae025ae0e5fa207/node_modules/react-fast-marquee/dist/index.js",
+      "file": "react-fast-marquee.js",
+      "fileHash": "6ca273fd",
+      "needsInterop": true
+    },
+    "react-hook-form": {
+      "src": "../../node_modules/.pnpm/react-hook-form@7.80.0_react@19.2.7/node_modules/react-hook-form/dist/index.esm.mjs",
+      "file": "react-hook-form.js",
+      "fileHash": "baa6fcdd",
+      "needsInterop": false
+    },
+    "react-icons/fa": {
+      "src": "../../node_modules/.pnpm/react-icons@5.6.0_react@19.2.7/node_modules/react-icons/fa/index.mjs",
+      "file": "react-icons_fa.js",
+      "fileHash": "4e4155a5",
+      "needsInterop": false
+    },
+    "react-icons/fi": {
+      "src": "../../node_modules/.pnpm/react-icons@5.6.0_react@19.2.7/node_modules/react-icons/fi/index.mjs",
+      "file": "react-icons_fi.js",
+      "fileHash": "67315e1a",
+      "needsInterop": false
+    },
+    "react-icons/si": {
+      "src": "../../node_modules/.pnpm/react-icons@5.6.0_react@19.2.7/node_modules/react-icons/si/index.mjs",
+      "file": "react-icons_si.js",
+      "fileHash": "f1f6c8ee",
+      "needsInterop": false
+    },
+    "react-toastify": {
+      "src": "../../node_modules/.pnpm/react-toastify@11.1.0_react_37d47a11ecedf6c3bcbabaf4690d9cdc/node_modules/react-toastify/dist/index.mjs",
+      "file": "react-toastify.js",
+      "fileHash": "2a41c881",
+      "needsInterop": false
+    },
+    "react-type-animation": {
+      "src": "../../node_modules/.pnpm/react-type-animation@3.2.0__afccd07ff67983031500738a2c8597ba/node_modules/react-type-animation/dist/esm/index.es.js",
+      "file": "react-type-animation.js",
+      "fileHash": "8ffaefb1",
+      "needsInterop": false
+    },
+    "zod": {
+      "src": "../../node_modules/.pnpm/zod@4.4.3/node_modules/zod/index.js",
+      "file": "zod.js",
+      "fileHash": "4495d416",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "hls-SSW342IW": {
+      "file": "hls-SSW342IW.js"
+    },
+    "vision_bundle-K5FC5SLK": {
+      "file": "vision_bundle-K5FC5SLK.js"
+    },
+    "chunk-UDR5TQ5G": {
+      "file": "chunk-UDR5TQ5G.js"
+    },
+    "chunk-RFISQACS": {
+      "file": "chunk-RFISQACS.js"
+    },
+    "chunk-C35NO63Z": {
+      "file": "chunk-C35NO63Z.js"
+    },
+    "chunk-IUQDVOTV": {
+      "file": "chunk-IUQDVOTV.js"
+    },
+    "chunk-6ML6RBKQ": {
+      "file": "chunk-6ML6RBKQ.js"
+    },
+    "chunk-4L7K7MLN": {
+      "file": "chunk-4L7K7MLN.js"
+    },
+    "chunk-FQ4SN37E": {
+      "file": "chunk-FQ4SN37E.js"
+    },
+    "chunk-LZNLZI3E": {
+      "file": "chunk-LZNLZI3E.js"
+    },
+    "chunk-CE7F2UDQ": {
+      "file": "chunk-CE7F2UDQ.js"
+    },
+    "chunk-JWZ7QUOM": {
+      "file": "chunk-JWZ7QUOM.js"
+    },
+    "chunk-DCKQDZ4A": {
+      "file": "chunk-DCKQDZ4A.js"
+    },
+    "chunk-MOQ7SZXD": {
+      "file": "chunk-MOQ7SZXD.js"
+    },
+    "chunk-ZPWHCABL": {
+      "file": "chunk-ZPWHCABL.js"
+    }
+  }
+}

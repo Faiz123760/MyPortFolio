@@ -4,7 +4,7 @@ import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
+  const [activeSection, setActiveSection] = useState("about");
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Detect scroll and change navbar background
@@ -12,9 +12,8 @@ const Navbar = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
       
-      // Update active section based on scroll position
       const sections = ["about", "education", "skills", "experience", "work"];
-      const scrollPosition = window.scrollY + 100;
+      const scrollPosition = window.scrollY + 150;
 
       for (const section of sections) {
         const element = document.getElementById(section);
@@ -35,19 +34,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isOpen && !event.target.closest('.mobile-menu') && !event.target.closest('.menu-button')) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  // Smooth scroll function
   const handleMenuItemClick = (sectionId) => {
     setActiveSection(sectionId);
     setIsOpen(false);
@@ -68,150 +54,118 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      className={`fixed top-0 w-full z-[99] transition-all duration-500 ${
         isScrolled 
-          ? "bg-[#0a0a1f] bg-opacity-80 backdrop-blur-md shadow-lg py-3" 
-          : "bg-transparent py-5"
+          ? "glass-navbar py-3 shadow-[0_8px_32px_rgba(11,6,24,0.6)]" 
+          : "bg-transparent py-6"
       }`}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-white flex justify-between items-center">
-          {/* Logo with hover effect */}
-          <div className="text-xl font-bold cursor-pointer group">
-            <span className="text-[#9d6eff] group-hover:text-[#b48aff] transition-colors">&lt;</span>
-            <span className="text-white group-hover:text-gray-200 transition-colors">Mohd</span>
-            <span className="text-[#9d6eff] group-hover:text-[#b48aff] transition-colors">/</span>
-            <span className="text-white group-hover:text-gray-200 transition-colors">Faiz</span>
-            <span className="text-[#9d6eff] group-hover:text-[#b48aff] transition-colors">&gt;</span>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex justify-between items-center">
+          {/* Logo with futuristic styling */}
+          <div 
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="text-2xl font-bold cursor-pointer group tracking-wider select-none font-mono"
+          >
+            <span className="text-[#915EFF] transition-colors group-hover:text-[#00E5FF]">&lt;</span>
+            <span className="text-white">Mohd</span>
+            <span className="text-[#915EFF]">/</span>
+            <span className="text-white">Faiz</span>
+            <span className="text-[#915EFF] transition-colors group-hover:text-[#00E5FF]">&gt;</span>
           </div>
 
-          {/* Desktop Menu with enhanced styling */}
-          <ul className="hidden md:flex items-center space-x-1 lg:space-x-2">
+          {/* Desktop Menu with active underline */}
+          <ul className="hidden md:flex items-center space-x-6">
             {menuItems.map((item) => (
               <li key={item.id}>
                 <button
                   onClick={() => handleMenuItemClick(item.id)}
-                  className={`relative px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                  className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 ${
                     activeSection === item.id
-                      ? "text-[#9d6eff] bg-white/10"
-                      : "text-gray-300 hover:text-white hover:bg-white/5"
+                      ? "text-[#00E5FF] text-neon-blue"
+                      : "text-gray-300 hover:text-white hover:scale-105"
                   }`}
                 >
                   {item.label}
                   {activeSection === item.id && (
-                    <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1/2 h-0.5 bg-[#9d6eff] rounded-full"></span>
+                    <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#915EFF] to-[#00E5FF] rounded-full shadow-[0_0_8px_#00E5FF]"></span>
                   )}
                 </button>
               </li>
             ))}
           </ul>
 
-          {/* Desktop Social Icons */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Social Links */}
+          <div className="hidden md:flex items-center space-x-4">
             <a
               href="https://github.com/Faiz123760/"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
+              className="text-gray-300 hover:text-[#00E5FF] transition-all hover:scale-110 p-1.5"
               aria-label="GitHub"
             >
-              <FaGithub size={22} />
+              <FaGithub size={20} />
             </a>
             <a
               href="https://www.linkedin.com/in/mohd-faiz-0493bb2a7/"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
+              className="text-gray-300 hover:text-[#915EFF] transition-all hover:scale-110 p-1.5"
               aria-label="LinkedIn"
             >
-              <FaLinkedin size={22} />
+              <FaLinkedin size={20} />
             </a>
           </div>
 
-          {/* Enhanced Mobile Menu Button */}
+          {/* Mobile Menu Button */}
           <button
-            className="md:hidden menu-button relative w-10 h-10 flex items-center justify-center rounded-lg bg-[#9d6eff]/10 hover:bg-[#9d6eff]/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#9d6eff] focus:ring-offset-2 focus:ring-offset-[#0a0a1f]"
+            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-[#915EFF]/10 border border-[#915EFF]/20 hover:bg-[#915EFF]/20 transition-all focus:outline-none"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-label="Toggle menu"
           >
-            {isOpen ? (
-              <FiX className="text-2xl text-[#9d6eff]" />
-            ) : (
-              <FiMenu className="text-2xl text-[#9d6eff]" />
-            )}
+            {isOpen ? <FiX className="text-2xl text-[#00E5FF]" /> : <FiMenu className="text-2xl text-[#915EFF]" />}
           </button>
         </div>
       </div>
 
-      {/* Enhanced Mobile Menu */}
-      <div
-        className={`absolute top-full left-0 w-full md:hidden transition-all duration-300 ease-in-out ${
-          isOpen 
-            ? "opacity-100 translate-y-0 pointer-events-auto" 
-            : "opacity-0 -translate-y-4 pointer-events-none"
-        }`}
-      >
-        <div className="container mx-auto px-4">
-          <div className="mobile-menu bg-[#0f0f25] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
-            {/* Menu Items */}
-            <ul className="py-3">
-              {menuItems.map((item, index) => (
-                <li key={item.id}>
-                  <button
-                    onClick={() => handleMenuItemClick(item.id)}
-                    className={`w-full text-left px-6 py-4 transition-all duration-300 ${
-                      activeSection === item.id
-                        ? "bg-[#9d6eff]/10 text-[#9d6eff] border-l-4 border-[#9d6eff]"
-                        : "text-gray-300 hover:bg-white/5 hover:text-white border-l-4 border-transparent"
-                    }`}
-                    style={{
-                      animation: isOpen ? `slideIn 0.3s ease-out ${index * 0.05}s both` : 'none'
-                    }}
-                  >
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            {/* Social Icons for Mobile */}
-            <div className="flex items-center justify-center space-x-4 py-6 border-t border-white/10 bg-[#0a0a1f]/50">
+      {/* Mobile Menu Panel */}
+      {isOpen && (
+        <div className="absolute top-full left-0 w-full md:hidden px-4 py-2">
+          <div className="bg-[#0b0618]/95 border border-[#915EFF]/30 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl p-4 space-y-3">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleMenuItemClick(item.id)}
+                className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
+                  activeSection === item.id
+                    ? "bg-[#915EFF]/20 text-[#00E5FF] border-l-4 border-[#00E5FF]"
+                    : "text-gray-300 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+            <div className="flex items-center justify-center space-x-6 pt-4 border-t border-white/10">
               <a
                 href="https://github.com/Faiz123760/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-3 bg-white/5 hover:bg-[#9d6eff]/20 rounded-xl transition-all duration-300 group"
-                aria-label="GitHub"
+                className="text-gray-300 hover:text-[#00E5FF]"
               >
-                <FaGithub size={24} className="text-gray-300 group-hover:text-[#9d6eff] transition-colors" />
+                <FaGithub size={24} />
               </a>
               <a
                 href="https://www.linkedin.com/in/mohd-faiz-0493bb2a7/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-3 bg-white/5 hover:bg-[#9d6eff]/20 rounded-xl transition-all duration-300 group"
-                aria-label="LinkedIn"
+                className="text-gray-300 hover:text-[#915EFF]"
               >
-                <FaLinkedin size={24} className="text-gray-300 group-hover:text-[#9d6eff] transition-colors" />
+                <FaLinkedin size={24} />
               </a>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Add animation styles */}
-      <style jsx>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
+      )}
     </nav>
   );
 };

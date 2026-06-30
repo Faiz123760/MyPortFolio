@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Typewriter } from 'react-simple-typewriter';
-import Tilt from 'react-parallax-tilt';
-import profileImage from '../../assets/Mohd_Faiz.png';
+import React, { useEffect, useState, useRef } from 'react';
+import { TypeAnimation } from 'react-type-animation';
+import { motion, AnimatePresence, useInView, useScroll, useTransform } from 'framer-motion';
+import profileImage from '../../assets/Mohd_Faiz.webp';
+import Scene from '../three/Scene';
+import WorkspaceModel from '../three/WorkspaceModel';
 import { 
   FaGithub, 
   FaLinkedin, 
@@ -11,23 +13,16 @@ import {
   FaPalette, 
   FaTerminal, 
   FaDownload, 
-  FaInstagram,
   FaDatabase,
   FaLaptopCode,
   FaChartLine,
-  FaStar,
-  FaGitAlt,
   FaCalendarAlt,
   FaFire,
-  FaAward,
+  FaMedal,
   FaRocket,
-  FaCrown,
-  FaCoffee,
   FaSmile,
-  FaTrophy,
-  FaMedal
 } from 'react-icons/fa';
-import { SiLeetcode, SiGithub } from 'react-icons/si';
+import { SiLeetcode } from 'react-icons/si';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -37,13 +32,12 @@ import {
   LineElement,
   BarElement,
   ArcElement,
-  Title,
   Tooltip,
   Legend,
   Filler
 } from 'chart.js';
 
-// Register ChartJS components
+// Only register chart types actually used (Line, Bar, Doughnut)
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -51,57 +45,229 @@ ChartJS.register(
   LineElement,
   BarElement,
   ArcElement,
-  Title,
   Tooltip,
   Legend,
   Filler
 );
 
+// LetterReveal: Animates text letter by letter
+const LetterReveal = ({ text, delay = 0, className = "" }) => {
+  const letters = Array.from(text);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.04, delayChildren: delay }
+    }
+  };
+  const childVariants = {
+    hidden: { opacity: 0, y: 15, rotateX: 60 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      transition: { type: "spring", damping: 14, stiffness: 120 }
+    }
+  };
+  return (
+    <motion.span 
+      variants={containerVariants} 
+      initial="hidden" 
+      whileInView="visible" 
+      viewport={{ once: true, margin: "-50px" }} 
+      className={`inline-block ${className}`}
+    >
+      {letters.map((char, index) => (
+        <motion.span key={index} variants={childVariants} className="inline-block origin-bottom whitespace-pre">
+          {char}
+        </motion.span>
+      ))}
+    </motion.span>
+  );
+};
+
+// Counter: Animates numbers counting up smoothly
+const Counter = ({ from = 0, to, duration = 1.6, suffix = "", delay = 0 }) => {
+  const [count, setCount] = useState(from);
+  const nodeRef = useRef(null);
+  const inView = useInView(nodeRef, { once: true, margin: "-50px" });
+
+  useEffect(() => {
+    if (!inView) return;
+    let startTime = null;
+    let frameId;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+      // Ease out cubic
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(easeProgress * (to - from) + from));
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(animate);
+      } else {
+        setCount(to);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      frameId = requestAnimationFrame(animate);
+    }, delay * 1000);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timer);
+    };
+  }, [inView, from, to, duration, delay]);
+
+  return <span ref={nodeRef} className="font-extrabold font-mono">{count.toLocaleString()}{suffix}</span>;
+};
+
+// Keyword: Interactive keyword with floating details card on hover
+const Keyword = ({ children, tooltipText }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  return (
+    <span 
+      className="relative text-[#00E5FF] font-semibold font-mono cursor-pointer transition-all duration-300 border-b border-dashed border-[#00E5FF]/40 hover:text-white hover:border-[#915EFF] px-1 bg-[#00E5FF]/5 rounded-md hover:shadow-[0_0_12px_rgba(0,229,255,0.3)] inline-block"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {children}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.span
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: -8, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#0f0a1c] border border-[#915EFF]/40 text-[10px] text-gray-200 rounded-lg whitespace-nowrap shadow-[0_4px_20px_rgba(145,94,255,0.4)] z-50 font-mono font-medium pointer-events-none"
+          >
+            {tooltipText}
+            <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#0f0a1c]" />
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+};
+
 const About = () => {
+  const sectionRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"]
+  });
+
+  // Parallax transforms based on scroll
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
+  const profileY = useTransform(scrollYProgress, [0, 1], ["0%", "10%"]);
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"]);
+
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [leetcodeStats, setLeetcodeStats] = useState({
-    totalSolved: 0,
-    easySolved: 0,
-    mediumSolved: 0,
-    hardSolved: 0,
-    ranking: 0,
-    acceptance: 0,
+    totalSolved: 543,
+    easySolved: 232,
+    mediumSolved: 254,
+    hardSolved: 57,
+    ranking: 165315,
+    acceptance: 56,
+    monthlySubmissions: { labels: [], data: [] },
+    rawCalendar: {},
     loading: true
   });
 
   const [githubStats, setGithubStats] = useState({
-    publicRepos: 0,
-    totalCommits: 0,
-    followers: 0,
-    following: 0,
-    contributions: [],
-    languages: {},
+    publicRepos: 18,
+    totalCommits: 620,
+    followers: 12,
+    following: 15,
+    contributions: [35, 42, 38, 48, 45, 39, 42, 46, 52, 44, 48, 53],
+    languages: { JavaScript: 8, React: 6, Java: 4, HTML: 2 },
     loading: true
   });
 
   const [activeTab, setActiveTab] = useState('leetcode');
 
-  // Fetch LeetCode stats
+  // Mouse Parallax Effect
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const { innerWidth, innerHeight } = window;
+      setMousePos({
+        x: (e.clientX - innerWidth / 2) * 0.02,
+        y: (e.clientY - innerHeight / 2) * 0.02
+      });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Fetching data
   useEffect(() => {
     const fetchLeetCodeStats = async () => {
       try {
-        // Using a more reliable LeetCode API
-        const response = await fetch('https://leetcode-api-faisalshohag.vercel.app/MrFaiz');
-        const data = await response.json();
+        const statsResponse = await fetch('https://alfa-leetcode-api.onrender.com/MrFaiz');
+        if (!statsResponse.ok) {
+          throw new Error(`HTTP error! status: ${statsResponse.status}`);
+        }
+        const statsData = await statsResponse.json();
         
-        if (data) {
+        const calResponse = await fetch('https://alfa-leetcode-api.onrender.com/MrFaiz/calendar');
+        if (!calResponse.ok) {
+          throw new Error(`HTTP error! status: ${calResponse.status}`);
+        }
+        const calData = await calResponse.json();
+
+        if (statsData && statsData.totalSolved) {
+          // Parse Calendar submissions (safe parse stringified JSON)
+          let calendar = {};
+          if (calData && calData.submissionCalendar) {
+            try {
+              calendar = typeof calData.submissionCalendar === 'string'
+                ? JSON.parse(calData.submissionCalendar)
+                : calData.submissionCalendar;
+            } catch (err) {
+              console.error("Error parsing submission calendar:", err);
+            }
+          }
+
+          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          const currentDate = new Date();
+          const past12Months = [];
+          
+          for (let i = 11; i >= 0; i--) {
+            const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            const monthKey = `${months[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
+            past12Months.push({ key: monthKey, year: d.getFullYear(), month: d.getMonth(), count: 0 });
+          }
+          
+          Object.entries(calendar).forEach(([timestamp, count]) => {
+            const date = new Date(Number(timestamp) * 1000);
+            const y = date.getFullYear();
+            const m = date.getMonth();
+            
+            const match = past12Months.find(p => p.year === y && p.month === m);
+            if (match) {
+              match.count += count;
+            }
+          });
+
           setLeetcodeStats({
-            totalSolved: data.totalSolved || 0,
-            easySolved: data.easySolved || 0,
-            mediumSolved: data.mediumSolved || 0,
-            hardSolved: data.hardSolved || 0,
-            ranking: data.ranking || 0,
-            acceptance: Math.round(data.acceptanceRate) || 0,
+            totalSolved: statsData.totalSolved,
+            easySolved: statsData.easySolved,
+            mediumSolved: statsData.mediumSolved,
+            hardSolved: statsData.hardSolved,
+            ranking: statsData.ranking || 165315,
+            acceptance: Math.round((statsData.totalSolved / statsData.totalQuestions) * 100) || 56,
+            monthlySubmissions: {
+              labels: past12Months.map(p => p.key),
+              data: past12Months.map(p => p.count)
+            },
+            rawCalendar: calendar,
             loading: false
           });
         }
       } catch (error) {
         console.error('Error fetching LeetCode stats:', error);
-        // Fallback to approximate stats if API fails, but keep loading false
         setLeetcodeStats(prev => ({ ...prev, loading: false }));
       }
     };
@@ -113,40 +279,23 @@ const About = () => {
         
         const reposResponse = await fetch('https://api.github.com/users/Faiz123760/repos?per_page=100');
         const reposData = await reposResponse.json();
-        
-        // Fetch real contributions for the chart
-        const contribResponse = await fetch('https://github-contributions-api.deno.dev/Faiz123760.json');
-        const contribData = await contribResponse.json();
-        
-        // Process contributions by month for the line chart
-        const monthlyContributions = new Array(12).fill(0);
-        if (contribData && contribData.contributions) {
-          contribData.contributions.forEach(day => {
-            const date = new Date(day.date);
-            if (date.getFullYear() === new Date().getFullYear()) {
-              monthlyContributions[date.getMonth()] += day.count;
+
+        const languages = {};
+        if (Array.isArray(reposData)) {
+          reposData.forEach(repo => {
+            if (repo.language) {
+              languages[repo.language] = (languages[repo.language] || 0) + 1;
             }
           });
         }
 
-        const languages = {};
-        let totalCommits = 0;
-        reposData.forEach(repo => {
-          if (repo.language) {
-            languages[repo.language] = (languages[repo.language] || 0) + 1;
-          }
-          // Estimate commits based on size/activity or just use a base + repo count
-          // Genuine commit count is hard without GQL, so we'll use a dynamic estimate
-          totalCommits += Math.floor(Math.random() * 20) + 10; 
-        });
-
         setGithubStats({
-          publicRepos: userData.public_repos || reposData.length,
-          totalCommits: userData.public_repos * 35 + 240, // More dynamic estimate
-          followers: userData.followers || 0,
-          following: userData.following || 0,
-          contributions: monthlyContributions.some(c => c > 0) ? monthlyContributions : [35, 42, 38, 48, 45, 39, 42, 46, 52, 44, 48, 53],
-          languages: languages,
+          publicRepos: userData.public_repos || 18,
+          totalCommits: (userData.public_repos || 18) * 32 + 320,
+          followers: userData.followers || 12,
+          following: userData.following || 15,
+          contributions: [35, 42, 38, 48, 45, 39, 42, 46, 52, 44, 48, 53],
+          languages: Object.keys(languages).length ? languages : { JavaScript: 8, React: 6, Java: 4 },
           loading: false
         });
       } catch (error) {
@@ -160,46 +309,30 @@ const About = () => {
   }, []);
 
   const skills = [
-    { name: 'Fullstack Developer', icon: <FaLaptopCode />, color: 'from-purple-500 to-pink-500' },
-    { name: 'SQL Developer', icon: <FaDatabase />, color: 'from-blue-500 to-cyan-500' },
-    { name: 'UI/UX Designer', icon: <FaPalette />, color: 'from-pink-500 to-rose-500' },
-    { name: 'Software Engineer', icon: <FaTerminal />, color: 'from-green-500 to-emerald-500' }
+    { name: 'Fullstack Developer', icon: <FaLaptopCode />, color: 'from-[#915EFF] to-[#A855F7]', desc: 'Constructing robust client/server spaces' },
+    { name: 'SQL Developer', icon: <FaDatabase />, color: 'from-[#00E5FF] to-blue-500', desc: 'Crafting complex queries & structure designs' },
+    { name: 'UI/UX Designer', icon: <FaPalette />, color: 'from-pink-500 to-rose-500', desc: 'Translating visual thoughts into neat designs' },
+    { name: 'Software Engineer', icon: <FaTerminal />, color: 'from-green-500 to-emerald-500', desc: 'Solving logic challenges at 60 FPS' }
   ];
 
   const stats = [
-    { label: 'Projects', value: githubStats.loading ? '...' : `${githubStats.publicRepos}+`, description: 'Completed', icon: <FaCode />, color: 'purple' },
-    { label: 'Solved', value: leetcodeStats.loading ? '...' : `${leetcodeStats.totalSolved}+`, description: 'LeetCode', icon: <SiLeetcode />, color: 'yellow' },
-    { label: 'Experience', value: '2+', description: 'Years', icon: <FaChartLine />, color: 'blue' },
-    { label: 'Commits', value: githubStats.loading ? '...' : `${githubStats.totalCommits}+`, description: 'Code', icon: <FaTerminal />, color: 'green' },
+    { label: 'Projects', value: githubStats.publicRepos, suffix: "+", description: 'Completed Repos', icon: <FaCode />, color: 'rgba(0, 229, 255, 0.15)' },
+    { label: 'Solved', value: leetcodeStats.totalSolved, suffix: "+", description: 'LeetCode Quests', icon: <SiLeetcode />, color: 'rgba(251, 191, 36, 0.15)' },
+    { label: 'Experience', value: 2, suffix: "+", description: 'Active Years', icon: <FaChartLine />, color: 'rgba(145, 94, 255, 0.15)' },
+    { label: 'Commits', value: githubStats.totalCommits, suffix: "+", description: 'GitHub Commits', icon: <FaTerminal />, color: 'rgba(16, 185, 129, 0.15)' },
   ];
 
-  const achievements = [
-    { icon: <FaMedal />, label: 'Hackathon Winner', year: '2025', color: 'purple' },
-  ];
-
-  // Chart options
+  // Chart configs
   const lineChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: { 
-        backgroundColor: '#1f2937',
-        titleColor: '#fff',
-        bodyColor: '#9ca3af',
-        borderColor: '#8b5cf6',
-        borderWidth: 1
-      }
+      tooltip: { backgroundColor: '#0f0a1c', titleColor: '#fff', bodyColor: '#9ca3af', borderColor: '#915EFF', borderWidth: 1 }
     },
     scales: {
-      y: { 
-        grid: { color: 'rgba(255,255,255,0.1)' },
-        ticks: { color: '#9ca3af' }
-      },
-      x: { 
-        grid: { display: false },
-        ticks: { color: '#9ca3af' }
-      }
+      y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#9ca3af', font: { size: 9 } } },
+      x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 9 } } }
     }
   };
 
@@ -207,488 +340,612 @@ const About = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { 
-        position: 'bottom', 
-        labels: { 
-          color: '#9ca3af',
-          font: { size: 10 }
-        }
-      }
+      legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 } } }
     },
-    cutout: '60%'
+    cutout: '70%'
   };
 
-  // LeetCode Doughnut Chart Data
   const leetcodeDoughnutData = {
     labels: ['Easy', 'Medium', 'Hard'],
     datasets: [{
       data: [leetcodeStats.easySolved, leetcodeStats.mediumSolved, leetcodeStats.hardSolved],
-      backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+      backgroundColor: ['#10b981', '#fbbf24', '#ef4444'],
       borderWidth: 0,
-      hoverOffset: 4
+      hoverOffset: 6
     }]
   };
 
-  // // GitHub Contribution Line Chart Data
-  // const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  // const githubLineData = {
-  //   labels: months,
-  //   datasets: [{
-  //     label: 'Contributions',
-  //     data: githubStats.contributions,
-  //     borderColor: '#8b5cf6',
-  //     backgroundColor: 'rgba(139, 92, 246, 0.1)',
-  //     fill: true,
-  //     tension: 0.4,
-  //     pointBackgroundColor: '#8b5cf6',
-  //     pointBorderColor: '#fff',
-  //     pointHoverRadius: 6
-  //   }]
-  // };
-
-  // GitHub Languages Bar Chart Data
   const languagesData = {
     labels: Object.keys(githubStats.languages),
     datasets: [{
       label: 'Repositories',
       data: Object.values(githubStats.languages),
       backgroundColor: [
-        'rgba(139, 92, 246, 0.8)',
-        'rgba(236, 72, 153, 0.8)',
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(16, 185, 129, 0.8)',
-        'rgba(245, 158, 11, 0.8)',
-        'rgba(239, 68, 68, 0.8)',
-        'rgba(139, 92, 246, 0.6)',
-        'rgba(236, 72, 153, 0.6)',
-        'rgba(59, 130, 246, 0.6)'
+        'rgba(145, 94, 255, 0.85)',
+        'rgba(0, 229, 255, 0.85)',
+        'rgba(168, 85, 247, 0.85)',
+        'rgba(16, 185, 129, 0.85)',
+        'rgba(245, 158, 11, 0.85)'
       ],
       borderRadius: 8
     }]
   };
 
-  // Typewriter text variations
-  const typewriterTexts = [
-    'Fullstack Developer',
-    'SQL Developer',
-    'UI/UX Designer',
-    'Software Engineer',
-    'Problem Solver',
-    'Code Artist'
-  ];
+  const leetcodeLineData = {
+    labels: leetcodeStats.monthlySubmissions.labels,
+    datasets: [{
+      label: 'Submissions',
+      data: leetcodeStats.monthlySubmissions.data,
+      borderColor: '#ffa116',
+      backgroundColor: 'rgba(251, 191, 36, 0.1)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: '#ffa116',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: '#ffa116',
+    }]
+  };
 
-  return (
-    <section
-      id="about"
-      className="section-default py-20 px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 font-poppins min-h-screen flex items-center overflow-hidden"
-    >
-      {/* Main Content */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto">
-        {/* Header Badge */}
-        <div className="text-center mb-12 animate-fade-in-down">
-          <div className="inline-flex items-center gap-2 glass px-6 py-2 rounded-full border border-purple-500/30">
-            <FaSmile className="text-purple-400" />
-            <span className="text-sm font-medium text-gray-300">Welcome to my digital space</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold mt-4 gradient-text">
-            About Me
-          </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mt-4 rounded-full"></div>
-        </div>
+  // Rendering custom interactive LeetCode calendar heat-map
+  const renderLeetcodeGrid = () => {
+    if (leetcodeStats.loading || !leetcodeStats.rawCalendar) return null;
+    
+    const today = new Date();
+    const startDate = new Date();
+    startDate.setDate(today.getDate() - 365);
+    const startDay = startDate.getDay();
+    startDate.setDate(startDate.getDate() - startDay); // Align to Sunday
 
-        {/* Stacked Layout - Profile First */}
-        <div className="space-y-8">
-          {/* Profile Section */}
-          <div className="w-full">
-            {/* Profile Card with Image */}
-            <Tilt tiltMaxAngleX={5} tiltMaxAngleY={5} perspective={1000} scale={1.02} transitionSpeed={2000}>
-              <div className="relative group">
-                {/* Profile Card - Removed animated borders */}
-                <div className="relative card-dark rounded-3xl p-8">
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    {/* Profile Image */}
-                    <div className="relative">
-                      <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl">
-                        <img 
-                          src={profileImage} 
-                          alt="Mohd Faiz" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      {/* Status Badge */}
-                      <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-gray-900"></div>
-                    </div>
-                    
-                    {/* Quick Info */}
-                    <div className="flex-1 text-center md:text-left">
-                      <h3 className="text-3xl font-bold text-white mb-2">Mohd Faiz</h3>
-                      <div className="flex items-center justify-center md:justify-start gap-2 text-gray-400 mb-4">
-                        <FaMapMarkerAlt className="text-purple-400" />
-                        <span>Based in India • Open for opportunities</span>
-                      </div>
-                      
-                      {/* Achievements Pills */}
-                      <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                        {achievements.map((item, index) => (
-                          <div 
-                            key={index} 
-                            className="flex items-center gap-1 glass px-3 py-1 rounded-full border border-purple-500/30"
-                          >
-                            <span className={`text-${item.color}-400`}>{item.icon}</span>
-                            <span className="text-xs text-white">{item.label}</span>
-                            <span className="text-xs text-gray-400">{item.year}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+    const days = [];
+    const tempDate = new Date(startDate);
+    
+    while (tempDate <= today) {
+      const year = tempDate.getFullYear();
+      const month = tempDate.getMonth();
+      const dateVal = tempDate.getDate();
+      
+      let count = 0;
+      Object.entries(leetcodeStats.rawCalendar).forEach(([timestamp, val]) => {
+        const d = new Date(Number(timestamp) * 1000);
+        if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === dateVal) {
+          count += val;
+        }
+      });
+      
+      days.push({
+        date: new Date(tempDate),
+        count
+      });
+      
+      tempDate.setDate(tempDate.getDate() + 1);
+    }
 
-                  {/* Bio with Typewriter Effect */}
-                  <div className="mt-8 p-6 card-gradient rounded-2xl">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FaRocket className="text-purple-400" />
-                      <h4 className="text-lg font-semibold text-white">Bio</h4>
-                    </div>
-                    <p className="text-gray-300 leading-relaxed">
-                      Results-driven  <span className="text-purple-400 font-semibold">Full Stack Developer</span>  with strong expertise in designing, developing, and deploying scalable web applications. Proficient in both frontend and backend technologies, with a solid foundation in <span className="text-pink-400 font-semibold">SQL and database optimization</span>  for efficient data handling and performance tuning. Adept at solving complex problems through logical thinking, clean code, and optimized algorithms. Passionate about building user-centric solutions, continuously learning modern technologies, and delivering high-quality, maintainable software.   
-                    </p>
-                    <div className="mt-3 text-lg font-semibold">
-                      <span className="text-gray-400">I am a </span>
-                      <span className="gradient-text">
-                        <Typewriter
-                          words={typewriterTexts}
-                          loop={true}
-                          cursor
-                          cursorStyle='|'
-                          typeSpeed={80}
-                          deleteSpeed={50}
-                          delaySpeed={2000}
-                        />
-                      </span>
-                    </div>
-                  </div>
-                </div>
+    const getCellColor = (count) => {
+      if (count === 0) return 'bg-[#1b1726]/40 border border-white/5';
+      if (count === 1) return 'bg-orange-500/20 border border-orange-500/30';
+      if (count <= 3) return 'bg-orange-500/40 border border-orange-500/50';
+      if (count <= 6) return 'bg-orange-500/70 border border-orange-500/80';
+      return 'bg-orange-500 border border-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.45)]';
+    };
+
+    return (
+      <div className="w-full space-y-3">
+        <h4 className="text-xs font-mono text-orange-500 uppercase tracking-widest">Submission Heatmap (Past Year)</h4>
+        <div className="flex flex-col bg-[#050505]/45 border border-white/5 rounded-xl p-4 md:p-6 overflow-hidden">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-orange-500/25 scrollbar-track-transparent">
+            <div className="flex gap-2 min-w-[760px] pb-2">
+              <div className="grid grid-rows-7 text-[9px] text-gray-500 font-mono pr-2 select-none justify-between h-[84px] py-1">
+                <span>Sun</span>
+                <span className="opacity-0">Mon</span>
+                <span>Tue</span>
+                <span className="opacity-0">Wed</span>
+                <span>Thu</span>
+                <span className="opacity-0">Fri</span>
+                <span>Sat</span>
               </div>
-            </Tilt>
-          </div>
-
-          {/* Skills Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {skills.map((skill, index) => (
-              <div 
-                key={index} 
-                className="group relative overflow-hidden glass rounded-xl p-4 border border-white/10 hover:border-transparent transition-all duration-500 hover:scale-105"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-r ${skill.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                <div className="relative flex items-center gap-3">
-                  <div className={`text-2xl bg-gradient-to-r ${skill.color} bg-clip-text text-transparent`}>
-                    {skill.icon}
-                  </div>
-                  <span className="text-sm font-medium text-white">{skill.name}</span>
-                </div>
-                <div className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r ${skill.color} w-0 group-hover:w-full transition-all duration-500`}></div>
+              
+              <div className="grid grid-flow-col grid-rows-7 gap-1 h-[84px]">
+                {days.map((day, i) => (
+                  <div
+                    key={i}
+                    className={`w-2.5 h-2.5 rounded-sm transition-all duration-300 hover:scale-125 cursor-pointer ${getCellColor(day.count)}`}
+                    title={`${day.count} submissions on ${day.date.toLocaleDateString()}`}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {stats.map((stat, index) => (
-              <div 
-                key={index} 
-                className="group relative text-center p-4 glass rounded-xl border border-white/10 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-2"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/20 group-hover:to-pink-600/20 rounded-xl transition-all duration-500"></div>
-                
-                <div className="relative">
-                  <div className={`text-${stat.color}-400 text-xl mb-1 flex justify-center`}>
-                    {stat.icon}
-                  </div>
-                  <div className="text-2xl font-bold gradient-text">
-                    {stat.value}
-                  </div>
-                  <div className="text-xs font-medium text-gray-400 mt-1">
-                    {stat.label}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Download CV Button */}
-          <div className="flex justify-center">
-            <a
-              href="https://drive.google.com/file/d/19O2fAV5MFPLvZ1R7oYarX96E1tKXRm_R/view?usp=drivesdk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative inline-flex items-center gap-2 text-white py-4 px-12 rounded-full text-lg font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95"
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600"></span>
-              <span className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              <FaDownload className="relative group-hover:animate-bounce" />
-              <span className="relative">DOWNLOAD CV</span>
-            </a>
-          </div>
-
-          {/* Stats Dashboard */}
-          <div className="w-full animate-fade-in animation-delay-500">
-            {/* Tab Navigation */}
-            <div className="flex justify-center gap-2 mb-6 glass p-1.5 rounded-full border border-white/10">
-              {[
-                { id: 'leetcode', icon: <SiLeetcode />, label: 'LeetCode', color: 'yellow' },
-                { id: 'github', icon: <FaGithub />, label: 'GitHub', color: 'purple' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                    activeTab === tab.id
-                      ? `bg-gradient-to-r from-${tab.color}-600 to-${tab.color}-400 text-white shadow-lg`
-                      : 'text-gray-400 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  <span className="text-sm font-medium hidden sm:inline">{tab.label}</span>
-                </button>
-              ))}
             </div>
-
-            {/* Tab Content */}
-            <div className="glass rounded-2xl p-6 border border-white/10 shadow-2xl">
-              {/* LeetCode Tab */}
-              {activeTab === 'leetcode' && (
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-yellow-500/20 rounded-xl">
-                      <SiLeetcode className="text-yellow-400 text-2xl" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white">LeetCode Statistics</h3>
-                  </div>
-                  
-                  {leetcodeStats.loading ? (
-                    <div className="flex justify-center items-center h-64">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {/* Stats Cards */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="card-gradient rounded-xl p-4 border border-yellow-500/20">
-                          <div className="text-3xl font-bold text-white">{leetcodeStats.totalSolved}</div>
-                          <div className="text-sm text-gray-400">Total Solved</div>
-                        </div>
-                        <div className="card-gradient rounded-xl p-4 border border-purple-500/20">
-                          <div className="text-3xl font-bold text-purple-400">60%</div>
-                          <div className="text-sm text-gray-400">Acceptance Rate</div>
-                        </div>
-                      </div>
-
-                      {/* Doughnut Chart */}
-                      <div className="h-48">
-                        <Doughnut data={leetcodeDoughnutData} options={doughnutChartOptions} />
-                      </div>
-
-                      {/* Difficulty Breakdown */}
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="text-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                          <div className="text-green-400 font-bold text-lg">{leetcodeStats.easySolved}</div>
-                          <div className="text-xs text-gray-400">Easy</div>
-                        </div>
-                        <div className="text-center p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-                          <div className="text-yellow-400 font-bold text-lg">{leetcodeStats.mediumSolved}</div>
-                          <div className="text-xs text-gray-400">Medium</div>
-                        </div>
-                        <div className="text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                          <div className="text-red-400 font-bold text-lg">{leetcodeStats.hardSolved}</div>
-                          <div className="text-xs text-gray-400">Hard</div>
-                        </div>
-                      </div>
-
-                      {/* Ranking with Progress */}
-                      <div className="relative">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-gray-400">Global Ranking</span>
-                          <span className="text-white font-bold">#{leetcodeStats.ranking.toLocaleString()}</span>
-                        </div>
-                        <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full"
-                            style={{ width: `${Math.min(100, (150000 / leetcodeStats.ranking) * 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* GitHub Tab */}
-              {activeTab === 'github' && (
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-purple-500/20 rounded-xl">
-                      <FaGithub className="text-purple-400 text-2xl" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white">GitHub Analytics</h3>
-                  </div>
-                  
-                  {githubStats.loading ? (
-                    <div className="flex justify-center items-center h-64">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {/* Stats Cards */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="card-gradient rounded-xl p-4 border border-purple-500/20">
-                          <div className="text-3xl font-bold text-white">{githubStats.publicRepos}</div>
-                          <div className="text-sm text-gray-400">Repositories</div>
-                        </div>
-                        <div className="card-gradient rounded-xl p-4 border border-pink-500/20">
-                          <div className="text-3xl font-bold text-pink-400">{githubStats.totalCommits}</div>
-                          <div className="text-sm text-gray-400">Total Commits</div>
-                        </div>
-                        <div className="card-gradient rounded-xl p-4 border border-blue-500/20">
-                          <div className="text-3xl font-bold text-blue-400">{githubStats.followers}</div>
-                          <div className="text-sm text-gray-400">Followers</div>
-                        </div>
-                        <div className="card-gradient rounded-xl p-4 border border-green-500/20">
-                          <div className="text-3xl font-bold text-green-400">{githubStats.following}</div>
-                          <div className="text-sm text-gray-400">Following</div>
-                        </div>
-                      </div>
-
-                      {/* Contribution Line Chart
-                      <div className="glass rounded-xl p-4 border border-white/10">
-                        <h4 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-                          <FaFire className="text-orange-400" />
-                          Contributions (Last 12 months)
-                        </h4>
-                        <div className="h-32">
-                          <Line data={githubLineData} options={lineChartOptions} />
-                        </div>
-                      </div> */}
-
-                      {/* Languages Bar Chart */}
-                      {Object.keys(githubStats.languages).length > 0 && (
-                        <div className="glass rounded-xl p-4 border border-white/10">
-                          <h4 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-                            <FaCode className="text-purple-400" />
-                            Languages Used
-                          </h4>
-                          <div className="h-32">
-                            <Bar 
-                              data={languagesData} 
-                              options={{
-                                ...lineChartOptions,
-                                indexAxis: 'y',
-                                plugins: { legend: { display: false } }
-                              }} 
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Activity Summary */}
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="text-center p-2 glass rounded-lg">
-                          <FaGitAlt className="text-purple-400 mx-auto mb-1" />
-                          <span className="text-xs text-gray-400">Active</span>
-                        </div>
-                        <div className="text-center p-2 glass rounded-lg">
-                          <FaCalendarAlt className="text-blue-400 mx-auto mb-1" />
-                          <span className="text-xs text-gray-400">Daily</span>
-                        </div>
-                        <div className="text-center p-2 glass rounded-lg">
-                          <FaFire className="text-orange-400 mx-auto mb-1" />
-                          <span className="text-xs text-gray-400">Streak</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+          </div>
+          
+          <div className="flex justify-between items-center text-[10px] text-gray-400 mt-3 pt-3 border-t border-white/5">
+            <div>
+              Total active days: <span className="text-white font-semibold">{days.filter(d => d.count > 0).length} days</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>Less</span>
+              <div className="w-2.5 h-2.5 rounded-sm bg-[#1b1726]/40 border border-white/5" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-orange-500/20 border border-orange-500/30" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-orange-500/40 border border-orange-500/50" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-orange-500/70 border border-orange-500/80" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-orange-500" />
+              <span>More</span>
             </div>
           </div>
         </div>
       </div>
+    );
+  };
 
-      {/* Custom Animations */}
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 0.6s ease-out forwards;
-          opacity: 0;
-        }
+  const floatingDecorations = [
+    { text: "</>", top: "12%", left: "10%" },
+    { text: "const", top: "28%", left: "82%" },
+    { text: "{}", top: "72%", left: "6%" },
+    { text: "0101", top: "82%", left: "88%" },
+    { text: "React", top: "58%", left: "85%" },
+    { text: "SQL", top: "42%", left: "8%" }
+  ];
+
+  return (
+    <div ref={sectionRef} className="relative w-full overflow-hidden bg-[#050505] text-white">
+      {/* CINEMATIC LAYERED BACKGROUND */}
+      <motion.div 
+        style={{ y: backgroundY }} 
+        className="absolute inset-0 z-0 pointer-events-none"
+      >
+        {/* Dynamic mesh gradients */}
+        <div className="absolute top-[-10%] left-[-15%] w-[60%] h-[60%] rounded-full bg-[#915EFF]/10 blur-[130px] animate-pulse" style={{ animationDuration: '10s' }} />
+        <div className="absolute bottom-[10%] right-[-15%] w-[65%] h-[65%] rounded-full bg-[#00E5FF]/10 blur-[140px] animate-pulse" style={{ animationDuration: '12s' }} />
         
-        @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in-down {
-          animation: fadeInDown 0.6s ease-out forwards;
-        }
+        {/* Particle and star backdrop */}
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/10 via-black to-black" />
         
-        .animate-fade-in {
-          animation: fadeInUp 0.8s ease-out forwards;
-          opacity: 0;
-        }
-        
-        .animation-delay-300 {
-          animation-delay: 0.3s;
-        }
-        .animation-delay-500 {
-          animation-delay: 0.5s;
-        }
-        .animation-delay-700 {
-          animation-delay: 0.7s;
-        }
-        .animation-delay-900 {
-          animation-delay: 0.9s;
-        }
-        .animation-delay-1000 {
-          animation-delay: 1s;
-        }
-        .animation-delay-1100 {
-          animation-delay: 1.1s;
-        }
-        .animation-delay-1300 {
-          animation-delay: 1.3s;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        
-        @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-gradient {
-          background-size: 300% 300%;
-          animation: gradient 8s ease infinite;
-        }
-      `}</style>
-    </section>
+        {/* Floating Code Decorations */}
+        {floatingDecorations.map((item, idx) => (
+          <motion.div
+            key={idx}
+            className="absolute text-[10px] md:text-xs font-mono font-bold text-[#915EFF]/20 select-none hidden md:block"
+            style={{ top: item.top, left: item.left }}
+            animate={{
+              y: [0, -12, 0],
+              opacity: [0.1, 0.25, 0.1],
+              rotate: [0, 5, 0]
+            }}
+            transition={{
+              duration: 6 + idx * 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            {item.text}
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* 3D HERO SECTION CONTAINER */}
+      <section className="relative w-full min-h-screen flex flex-col md:flex-row items-center justify-between px-6 lg:px-16 pt-24 overflow-hidden z-10">
+        {/* Left Side: Name and details */}
+        <div className="w-full md:w-1/2 flex flex-col justify-center text-left space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-sm font-mono text-[#00E5FF] tracking-widest uppercase mb-1">
+              <LetterReveal text="Welcome to my space" delay={0.2} />
+            </h3>
+            
+            <h1 className="text-5xl lg:text-7xl font-extrabold text-white tracking-tight flex flex-wrap">
+              <LetterReveal text="Hi, I'm " delay={0.4} />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#915EFF] to-[#A855F7] ml-2">
+                <LetterReveal text="Mohd Faiz" delay={0.6} />
+              </span>
+            </h1>
+
+            <div className="text-xl lg:text-3xl font-semibold text-gray-300 h-12 flex items-center">
+              <span className="mr-2">I am a</span>
+              <span className="text-[#00E5FF] font-mono">
+                <TypeAnimation
+                  sequence={[
+                    'Full Stack Developer',
+                    1500,
+                    'Java Developer',
+                    1500,
+                    'Backend Engineer',
+                    1500,
+                    'Software Engineer',
+                    1500
+                  ]}
+                  wrapper="span"
+                  speed={40}
+                  repeat={Infinity}
+                />
+              </span>
+            </div>
+          </div>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="text-gray-400 max-w-lg text-base leading-relaxed"
+          >
+            I craft immersive digital experiences by combining modern full-stack technologies with beautiful, interactive 3D interfaces. Let's explore my credentials below.
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 1.0 }}
+            className="flex flex-wrap gap-4 pt-4"
+          >
+            <a
+              href="https://drive.google.com/file/d/19O2fAV5MFPLvZ1R7oYarX96E1tKXRm_R/view?usp=drivesdk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-3 rounded-full bg-gradient-to-r from-[#915EFF] to-[#A855F7] text-white font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(145,94,255,0.4)] flex items-center gap-2"
+            >
+              <FaDownload className="animate-bounce" /> Download CV
+            </a>
+            <button
+              onClick={() => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" })}
+              className="px-6 py-3 rounded-full border border-white/20 hover:border-[#00E5FF] text-white hover:text-[#00E5FF] font-bold transition-all hover:bg-white/5"
+            >
+              View Projects
+            </button>
+            <button
+              onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}
+              className="px-6 py-3 rounded-full border border-[#915EFF]/50 text-white hover:bg-[#915EFF]/10 font-bold transition-all"
+            >
+              Contact Me
+            </button>
+          </motion.div>
+        </div>
+
+        {/* Right Side: Interactive 3D Canvas */}
+        <motion.div 
+          style={{ y: profileY }} 
+          className="w-full md:w-1/2 h-[50vh] md:h-[80vh] relative mt-10 md:mt-0"
+        >
+          <Scene enableZoom={false} cameraPos={[0, 0, 4.5]}>
+            <WorkspaceModel />
+          </Scene>
+        </motion.div>
+      </section>
+
+      {/* ABOUT ME & ANALYTICS SECTION */}
+      <section
+        id="about"
+        className="relative w-full py-28 px-6 lg:px-16 bg-[#080312]/95 flex flex-col items-center justify-center overflow-hidden z-10"
+      >
+        <div className="max-w-6xl w-full space-y-16">
+          {/* Section Header */}
+          <div className="text-center space-y-3">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#915EFF]/10 border border-[#915EFF]/30 text-xs text-gray-300 font-mono"
+            >
+              <FaSmile className="text-[#915EFF] animate-spin" style={{ animationDuration: '4s' }} /> Welcome to my digital workspace
+            </motion.div>
+            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+              <LetterReveal text="About Me" delay={0.1} />
+            </h2>
+            <motion.div 
+              initial={{ width: 0 }}
+              whileInView={{ width: "80px" }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="h-1 bg-gradient-to-r from-[#915EFF] to-[#00E5FF] mx-auto rounded-full shadow-[0_0_8px_#00E5FF]" 
+            />
+          </div>
+
+          {/* Profile Card & Info */}
+          <div className="w-full">
+            <div className="glass-card p-8 lg:p-12 relative overflow-hidden border border-white/5 rounded-3xl bg-[#0d071c]/65 backdrop-blur-xl shadow-2xl">
+              {/* Futuristic scanning ray overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#915EFF]/5 to-transparent h-full w-full pointer-events-none animate-pulse" style={{ animationDuration: '3s' }} />
+              
+              <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
+                {/* Holographic Circular Scanner Frame for Profile Pic */}
+                <div className="relative flex-shrink-0">
+                  {/* Rotating Neon outer rings */}
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-[-14px] rounded-full border border-dashed border-[#915EFF]/40"
+                  />
+                  <motion.div 
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-[-8px] rounded-full border border-double border-t-[#00E5FF]/40 border-b-[#915EFF]/40 border-l-transparent border-r-transparent"
+                  />
+
+                  {/* Circular profile image container */}
+                  <div className="w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-4 border-[#915EFF]/60 shadow-[0_0_40px_rgba(145,94,255,0.4)] relative bg-[#0b0618]">
+                    <img 
+                      src={profileImage} 
+                      alt="Mohd Faiz" 
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                    {/* Glowing Energy Pulse Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#915EFF]/10 to-transparent pointer-events-none" />
+                  </div>
+                  
+                  {/* Live Status indicator */}
+                  <div className="absolute bottom-3 right-3 flex items-center justify-center">
+                    <span className="absolute inline-flex h-6 w-6 rounded-full bg-green-400/30 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-4.5 w-4.5 bg-green-500 border-2 border-[#0d071c] shadow-[0_0_10px_#22c55e]" />
+                  </div>
+                </div>
+
+                {/* About Bio */}
+                <div className="flex-1 space-y-6 text-center md:text-left">
+                  <div className="space-y-1">
+                    <h3 className="text-3xl font-extrabold text-white">Mohd Faiz</h3>
+                    <div className="flex items-center justify-center md:justify-start gap-2 text-gray-400 text-sm font-mono">
+                      <FaMapMarkerAlt className="text-[#00E5FF] animate-bounce" />
+                      <span>Kanpur, India • Available for Opportunities</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-gray-300 leading-relaxed text-base">
+                    Results-driven <Keyword tooltipText="Node.js | Express | Rest APIs | Next.js | Spring Boot">Full Stack Developer</Keyword> with strong expertise in designing, developing, and deploying scalable web applications. Proficient in both frontend and backend technologies, with a solid foundation in <Keyword tooltipText="PostgreSQL | MySQL | Query Optimization | Indexes">SQL and database optimization</Keyword> for efficient data handling and performance tuning. Highly skilled in <Keyword tooltipText="React | Redux Toolkit | Tailwind CSS | Framer Motion">Frontend</Keyword> interfaces and <Keyword tooltipText="Rest APIs | Auth | Microservices | Security">Backend</Keyword> architecture.
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-start pt-2">
+                    <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#915EFF]/10 border border-[#915EFF]/30 text-xs text-white shadow-[0_0_10px_rgba(145,94,255,0.2)]">
+                      <FaMedal className="text-yellow-400" /> Hackathon Winner 2025
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Premium Glass Role Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {skills.map((skill, index) => (
+              <motion.div 
+                key={index} 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="group relative overflow-hidden border border-white/5 rounded-2xl p-6 bg-[#0f0722]/50 hover:bg-[#0f0722]/80 backdrop-blur-md transition-all shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] hover:border-[#00E5FF]/40 hover:shadow-[0_8px_30px_rgba(0,229,255,0.15)] cursor-pointer"
+              >
+                {/* Neon light sweep */}
+                <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
+                
+                <div className="space-y-4">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${skill.color} p-2.5 flex items-center justify-center text-white text-xl shadow-lg transition-transform duration-500 group-hover:rotate-[360deg]`}>
+                    {skill.icon}
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-bold text-white group-hover:text-[#00E5FF] transition-colors">{skill.name}</h4>
+                    <p className="text-xs text-gray-400 leading-relaxed">{skill.desc}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Stats Badges Grid with Counting Animation */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -4 }}
+                className="p-6 text-center border border-white/5 rounded-2xl bg-[#0f0722]/40 hover:border-[#915EFF]/40 hover:bg-[#0f0722]/60 backdrop-blur-md shadow-lg transition-all"
+              >
+                <div className="text-2xl text-[#915EFF] flex justify-center mb-2 animate-bounce" style={{ animationDuration: '3s' }}>
+                  {stat.icon}
+                </div>
+                <div className="text-4xl font-extrabold text-white tracking-tight">
+                  <Counter to={stat.value} suffix={stat.suffix} delay={0.5} />
+                </div>
+                <div className="text-xs font-mono text-gray-400 mt-1 uppercase tracking-widest">{stat.label}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">{stat.description}</div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Dynamic Tab Switch Dashboard */}
+          <div className="w-full">
+            {/* Sliding Tab Controller */}
+            <div className="flex justify-center gap-2 mb-8 p-1.5 bg-[#050505]/75 border border-white/10 rounded-full max-w-sm mx-auto relative overflow-hidden backdrop-blur-md">
+              <motion.div
+                layoutId="activeTabIndicator"
+                className="absolute top-1.5 bottom-1.5 rounded-full z-0"
+                style={{
+                  left: activeTab === 'leetcode' ? '6px' : 'calc(50% + 2px)',
+                  right: activeTab === 'leetcode' ? 'calc(50% + 2px)' : '6px',
+                  background: activeTab === 'leetcode' 
+                    ? 'linear-gradient(to right, #f59e0b, #d97706)' 
+                    : 'linear-gradient(to right, #00E5FF, #3b82f6)',
+                  boxShadow: activeTab === 'leetcode' 
+                    ? '0 0 15px rgba(245, 158, 11, 0.4)' 
+                    : '0 0 15px rgba(0, 229, 255, 0.4)'
+                }}
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              />
+              <button
+                onClick={() => setActiveTab('leetcode')}
+                className={`flex-1 py-2.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all duration-300 z-10 relative ${
+                  activeTab === 'leetcode' ? "text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                LeetCode
+              </button>
+              <button
+                onClick={() => setActiveTab('github')}
+                className={`flex-1 py-2.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider transition-all duration-300 z-10 relative ${
+                  activeTab === 'github' ? "text-black" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                GitHub
+              </button>
+            </div>
+
+            {/* 3D Page Flip Book Container */}
+            <div className="relative w-full min-h-[640px] md:min-h-[580px] lg:min-h-[520px]" style={{ perspective: "1800px" }}>
+              <motion.div
+                className="w-full h-full relative"
+                style={{ transformStyle: "preserve-3d" }}
+                animate={{ rotateY: activeTab === 'leetcode' ? 0 : -180 }}
+                transition={{ type: "spring", stiffness: 90, damping: 20 }}
+              >
+                {/* FRONT PAGE: LeetCode */}
+                <div 
+                  className={`w-full h-full p-8 border border-white/10 rounded-3xl bg-[#0c061a]/85 backdrop-blur-xl shadow-2xl absolute inset-0 ${
+                    activeTab === 'leetcode' ? 'pointer-events-auto z-10' : 'pointer-events-none z-0'
+                  }`}
+                  style={{ backfaceVisibility: "hidden" }}
+                >
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-3">
+                      <SiLeetcode className="text-yellow-500 text-3xl animate-pulse" />
+                      <div>
+                        <h3 className="text-xl font-bold text-white">LeetCode Analytics</h3>
+                        <p className="text-xs text-gray-400 font-mono">Live dynamic stats</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                      {/* Doughnut Chart */}
+                      <div className="h-48 relative">
+                        <Doughnut data={leetcodeDoughnutData} options={doughnutChartOptions} />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
+                          <span className="text-2xl font-extrabold text-white">{leetcodeStats.totalSolved}</span>
+                          <span className="text-[10px] text-gray-400 uppercase tracking-widest">Solved</span>
+                        </div>
+                      </div>
+                      
+                      {/* Category Badges */}
+                      <div className="grid grid-cols-3 md:grid-cols-1 gap-4 text-center md:text-left">
+                        <div className="p-3.5 bg-green-500/10 rounded-xl border border-green-500/20 hover:bg-green-500/15 transition-all">
+                          <div className="text-green-400 font-extrabold text-lg">{leetcodeStats.easySolved}</div>
+                          <div className="text-[10px] text-gray-400 font-mono uppercase">Easy Solved</div>
+                        </div>
+                        <div className="p-3.5 bg-yellow-500/10 rounded-xl border border-yellow-500/20 hover:bg-yellow-500/15 transition-all">
+                          <div className="text-yellow-400 font-extrabold text-lg">{leetcodeStats.mediumSolved}</div>
+                          <div className="text-[10px] text-gray-400 font-mono uppercase">Medium Solved</div>
+                        </div>
+                        <div className="p-3.5 bg-red-500/10 rounded-xl border border-red-500/20 hover:bg-red-500/15 transition-all">
+                          <div className="text-red-400 font-extrabold text-lg">{leetcodeStats.hardSolved}</div>
+                          <div className="text-[10px] text-gray-400 font-mono uppercase">Hard Solved</div>
+                        </div>
+                      </div>
+
+                      {/* Acceptance and Ranking info */}
+                      <div className="space-y-4 bg-white/5 p-6 rounded-2xl border border-white/5">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-400">Global Rank</span>
+                          <span className="text-[#00E5FF] font-extrabold font-mono">#{leetcodeStats.ranking.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-400">Acceptance Rate</span>
+                          <span className="text-orange-500 font-extrabold font-mono">{leetcodeStats.acceptance}%</span>
+                        </div>
+                        <div className="text-[10px] text-gray-500 leading-relaxed font-mono">
+                          Stats updated dynamically from public LeetCode endpoint. Keep on coding!
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Custom submission calendar heatmap */}
+                    {renderLeetcodeGrid()}
+
+                    {/* Monthly Submissions Line Chart */}
+                    {leetcodeStats.monthlySubmissions.data.length > 0 && (
+                      <div className="border-t border-white/5 pt-6">
+                        <h4 className="text-xs font-mono text-yellow-500 uppercase tracking-widest mb-4">Submission Trend (Monthly)</h4>
+                        <div className="h-44 w-full">
+                          <Line data={leetcodeLineData} options={lineChartOptions} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* BACK PAGE: GitHub */}
+                <div 
+                  className={`w-full h-full p-8 border border-white/10 rounded-3xl bg-[#0c061a]/85 backdrop-blur-xl shadow-2xl absolute inset-0 ${
+                    activeTab === 'github' ? 'pointer-events-auto z-10' : 'pointer-events-none z-0'
+                  }`}
+                  style={{ 
+                    backfaceVisibility: "hidden", 
+                    transform: "rotateY(180deg)" 
+                  }}
+                >
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-3">
+                      <FaGithub className="text-[#00E5FF] text-3xl animate-pulse" />
+                      <div>
+                        <h3 className="text-xl font-bold text-white">GitHub Analytics</h3>
+                        <p className="text-xs text-gray-400 font-mono">Live repository stats & contributions</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Language Usage Bar Chart */}
+                      <div className="glass-card p-5 border border-white/5 bg-[#050505]/45 rounded-2xl">
+                        <h4 className="text-xs text-gray-400 uppercase tracking-widest font-mono mb-4">Top Languages</h4>
+                        <div className="h-44">
+                          <Bar 
+                            data={languagesData} 
+                            options={{
+                              ...lineChartOptions,
+                              indexAxis: 'y',
+                            }} 
+                          />
+                        </div>
+                      </div>
+
+                      {/* Repos, Commits, Followers stats */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-5 bg-[#915EFF]/5 rounded-2xl border border-[#915EFF]/15 flex flex-col justify-center">
+                          <span className="text-3xl font-extrabold text-white font-mono">{githubStats.publicRepos}</span>
+                          <div className="text-xs text-gray-400 font-mono mt-1 uppercase">Repositories</div>
+                        </div>
+                        <div className="p-5 bg-[#00E5FF]/5 rounded-2xl border border-[#00E5FF]/15 flex flex-col justify-center">
+                          <span className="text-3xl font-extrabold text-white font-mono">{githubStats.totalCommits}</span>
+                          <div className="text-xs text-gray-400 font-mono mt-1 uppercase">Est. Commits</div>
+                        </div>
+                        <div className="p-5 bg-white/5 rounded-2xl border border-white/10 flex flex-col justify-center">
+                          <span className="text-2xl font-extrabold text-white font-mono">{githubStats.followers}</span>
+                          <div className="text-xs text-gray-400 font-mono mt-1 uppercase">Followers</div>
+                        </div>
+                        <div className="p-5 bg-white/5 rounded-2xl border border-white/10 flex flex-col justify-center">
+                          <span className="text-2xl font-extrabold text-white font-mono">{githubStats.following}</span>
+                          <div className="text-xs text-gray-400 font-mono mt-1 uppercase">Following</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Visual Contribution Calendar */}
+                    <div className="border-t border-white/5 pt-6">
+                      <h4 className="text-xs font-mono text-[#00E5FF] uppercase tracking-widest mb-4">Contribution Calendar</h4>
+                      <div className="w-full flex justify-center">
+                        <img 
+                          src="https://ghchart.rshah.org/915eff/Faiz123760" 
+                          alt="GitHub Contributions" 
+                          className="w-full max-w-4xl rounded-xl border border-white/5 p-4 bg-[#050505]/45 hover:border-[#915eff]/30 transition-all duration-300 select-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };
 

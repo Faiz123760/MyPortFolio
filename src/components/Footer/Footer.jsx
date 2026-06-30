@@ -1,210 +1,139 @@
 import React from "react";
-import { 
-  FaFacebookF, 
-  FaTwitter, 
-  FaLinkedinIn, 
-  FaInstagram, 
-  FaYoutube,
-  FaGithub,
-  FaHeart,
-  FaArrowUp,
-  FaEnvelope,
-  FaMapMarkerAlt,
-  FaPhoneAlt,
-  FaPaperPlane
-} from "react-icons/fa";
-import { SiLeetcode } from "react-icons/si";
+import { FaLinkedinIn, FaInstagram, FaGithub, FaHeart, FaArrowUp } from "react-icons/fa";
+import { SiLeetcode as LeetcodeIcon } from "react-icons/si";
+import { motion } from "framer-motion";
+import Scene from "../three/Scene";
+import EarthModel from "../three/EarthModel";
 
 const Footer = () => {
-  // Smooth scroll function
-  const handleScroll = (sectionId) => {
-    const section = document.getElementById(sectionId);
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  // Scroll to top function
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle email click
-  const handleEmailClick = () => {
-    window.location.href = "mailto:faiz47532@gmail.com?subject=Hello%20Faiz&body=I%20would%20like%20to%20connect%20with%20you";
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
   };
 
   return (
-    <footer className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white pt-16 pb-8 px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-purple-600 rounded-full opacity-10 blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-pink-600 rounded-full opacity-10 blur-3xl"></div>
-      </div>
+    <footer className="relative bg-[#0b0618] text-white pt-20 pb-8 px-6 lg:px-16 overflow-hidden border-t border-white/5">
+      {/* Soft background ambient gradient lights */}
+      <div className="absolute top-0 left-1/4 w-[300px] h-[300px] rounded-full bg-[#915EFF]/5 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] rounded-full bg-[#00E5FF]/4 blur-[100px] pointer-events-none" />
 
-      {/* Main Content */}
-      <div className="relative z-10 max-w-6xl mx-auto">
-        {/* Top Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {/* Brand Section */}
-          <div className="col-span-1 lg:col-span-1">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+      <motion.div 
+        className="max-w-6xl mx-auto z-10 relative"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+        variants={containerVariants}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          {/* Logo Brand info */}
+          <motion.div className="space-y-4" variants={itemVariants}>
+            <h2 className="text-3xl font-black bg-gradient-to-r from-[#915EFF] via-[#A855F7] to-[#00E5FF] bg-clip-text text-transparent uppercase tracking-wider">
               Mohd Faiz
             </h2>
-            <p className="text-gray-400 text-sm leading-relaxed mb-4">
-              Crafting digital experiences with passion and precision. Full-stack developer dedicated to building beautiful and functional web applications.
+            <p className="text-xs text-gray-400 leading-relaxed font-light">
+              Crafting high-fidelity, interactive digital products. Dedicated to delivering optimized code and cinematic user experiences.
             </p>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <FaHeart className="text-pink-400 animate-pulse" />
-              <span>Available for opportunities</span>
+            <div className="flex items-center gap-1.5 text-xs text-[#00E5FF] font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E5FF] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E5FF]"></span>
+              </span>
+              <span>Available globally for opportunities</span>
             </div>
-            
-            {/* Email Contact Button */}
-            <button
-              onClick={handleEmailClick}
-              className="mt-4 w-full group relative overflow-hidden bg-gradient-to-r from-purple-500 to-pink-500 p-[2px] rounded-xl"
-            >
-              <div className="relative flex items-center justify-center gap-2 bg-gray-900 rounded-xl px-4 py-3 transition-all duration-300 group-hover:bg-transparent">
-                <FaEnvelope className="text-purple-400 group-hover:text-white transition-colors duration-300" />
-                <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors duration-300">
-                  Send me an email
-                </span>
-                <FaPaperPlane className="text-pink-400 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-              </div>
-            </button>
-          </div>
+          </motion.div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4 relative inline-block">
-              Quick Links
-              <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></span>
-            </h3>
-            <nav className="flex flex-col space-y-3">
-              {[
-                { name: "About", id: "about" },
-                { name: "Skills", id: "skills" },
-                { name: "Education", id: "education" },
-                { name: "Experience", id: "experience" },
-                { name: "Projects", id: "projects" },
-              ].map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleScroll(item.id)}
-                  className="text-gray-400 hover:text-purple-400 text-sm transition-all duration-300 text-left hover:translate-x-2"
-                >
-                  {item.name}
-                </button>
+          {/* Navigation Links */}
+          <motion.div className="space-y-4" variants={itemVariants}>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#915EFF] font-mono">Quick Nav</h3>
+            <ul className="space-y-2.5 text-xs text-gray-400">
+              {["about", "education", "skills", "experience", "work"].map((id) => (
+                <li key={id}>
+                  <button
+                    onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
+                    className="hover:text-[#00E5FF] hover:translate-x-1 transition-all duration-300 capitalize flex items-center gap-1 group"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover:bg-[#00E5FF] transition-all duration-300" />
+                    <span>{id === "work" ? "projects" : id}</span>
+                  </button>
+                </li>
               ))}
-            </nav>
-          </div>
+            </ul>
+          </motion.div>
 
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4 relative inline-block">
-              Contact Info
-              <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></span>
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-gray-400 hover:text-purple-400 transition-colors duration-300 group">
-                <FaEnvelope className="text-purple-400" />
-                <a href="mailto:faiz47532@gmail.com" className="text-sm">
-                  faiz47532@gmail.com
-                </a>
-              </div>
-              <div className="flex items-center gap-3 text-gray-400 hover:text-purple-400 transition-colors duration-300">
-                <FaPhoneAlt className="text-purple-400" />
-                <a href="tel:+918795412711" className="text-sm">
-                  +91 8795412711
-                </a>
-              </div>
-              <div className="flex items-center gap-3 text-gray-400">
-                <FaMapMarkerAlt className="text-purple-400" />
-                <span className="text-sm">India</span>
-              </div>
-            </div>
-
-            {/* Quick Contact Hint */}
-            <div className="mt-4 text-xs text-gray-500">
-              <span>Click email to send a message</span>
-            </div>
-          </div>
-
-          {/* Quote Section */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4 relative inline-block">
-              Quote
-              <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></span>
-            </h3>
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <p className="text-gray-300 text-sm italic">
-                "Code is like humor. When you have to explain it, it's bad."
-              </p>
-              <p className="text-gray-400 text-xs mt-2">- Cory House</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Social Media & Copyright Section */}
-        <div className="relative pt-8 border-t border-white/10">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            {/* Social Icons */}
-            <div className="flex items-center gap-4">
+          {/* Social connections */}
+          <motion.div className="space-y-4" variants={itemVariants}>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#915EFF] font-mono">Let's Connect</h3>
+            <div className="flex flex-wrap gap-3">
               {[
-                { icon: <FaLinkedinIn />, link: "https://www.linkedin.com/in/mohd-faiz-0493bb2a7/", label: "LinkedIn" },
-                { icon: <FaInstagram />, link: "https://www.instagram.com/mr_faiz_.official", label: "Instagram" },
-                { icon: <FaGithub />, link: "https://github.com/Faiz123760/", label: "GitHub" },
-                { icon: <SiLeetcode />, link: "https://leetcode.com/u/MrFaiz/", label: "LeetCode" }
+                { icon: <FaLinkedinIn size={18} />, link: "https://www.linkedin.com/in/mohd-faiz-0493bb2a7/", label: "LinkedIn" },
+                { icon: <FaInstagram size={18} />, link: "https://www.instagram.com/mr_faiz_.official", label: "Instagram" },
+                { icon: <FaGithub size={18} />, link: "https://github.com/Faiz123760/", label: "GitHub" },
+                { icon: <LeetcodeIcon size={18} />, link: "https://leetcode.com/u/MrFaiz/", label: "LeetCode" }
               ].map((item, index) => (
-                <a
+                <motion.a
                   key={index}
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={item.label}
-                  className="relative group"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-300 hover:text-[#00E5FF] hover:border-[#00E5FF] transition-all shadow-lg hover:shadow-[0_0_15px_rgba(0,229,255,0.2)]"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-0 group-hover:opacity-75 transition-opacity duration-300"></div>
-                  <div className="relative w-10 h-10 bg-white/5 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-300 group-hover:text-white border border-white/10 group-hover:border-transparent transition-all duration-300 hover:scale-110">
-                    {item.icon}
-                  </div>
-                </a>
+                  {item.icon}
+                </motion.a>
               ))}
             </div>
+          </motion.div>
 
-            {/* Copyright */}
-            <p className="text-sm text-gray-400 order-first md:order-none">
-              © {new Date().getFullYear()} Mohd Faiz. Crafted with 
-              <FaHeart className="inline mx-1 text-pink-400 animate-pulse" /> 
-              All rights reserved.
-            </p>
-
-            {/* Back to Top Button */}
-            <button
-              onClick={scrollToTop}
-              className="group relative w-10 h-10 bg-white/5 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10 hover:border-purple-500/50 transition-all duration-300 hover:scale-110"
-              aria-label="Back to top"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-0 group-hover:opacity-75 transition-opacity duration-300"></div>
-              <FaArrowUp className="relative text-gray-300 group-hover:text-white transition-colors duration-300" />
-            </button>
-          </div>
-
-          {/* Bottom Decoration */}
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-t-full opacity-50"></div>
+          {/* 3D Earth representation */}
+          <motion.div className="w-full h-44 relative bg-[#050505]/40 border border-white/5 rounded-2xl overflow-hidden group/canvas" variants={itemVariants}>
+            <Scene enableZoom={false} cameraPos={[0, 0, 3]}>
+              <EarthModel />
+            </Scene>
+            <div className="absolute bottom-2 left-2 text-[9px] text-gray-500 font-mono pointer-events-none uppercase tracking-wider group-hover/canvas:text-[#00E5FF] transition-colors">
+              Global Network
+            </div>
+            <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
+          </motion.div>
         </div>
-      </div>
 
-      {/* Custom Animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-      `}</style>
+        {/* Bottom bar */}
+        <motion.div 
+          className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4"
+          variants={itemVariants}
+        >
+          <p className="text-xs text-gray-500 font-light text-center md:text-left">
+            © {new Date().getFullYear()} Mohd Faiz. Made with <FaHeart className="inline text-[#915EFF] mx-0.5 animate-pulse" /> & Optimizations.
+          </p>
+          <motion.button
+            onClick={scrollToTop}
+            whileHover={{ y: -4, scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-[#00E5FF] hover:border-[#00E5FF] transition-all shadow-md"
+            aria-label="Scroll to top"
+          >
+            <FaArrowUp size={16} />
+          </motion.button>
+        </motion.div>
+      </motion.div>
     </footer>
   );
 };

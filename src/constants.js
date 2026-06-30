@@ -1,45 +1,45 @@
 // Skills Section Logo's
-import htmlLogo from './assets/tech_logo/html.png';
-import cssLogo from './assets/tech_logo/css.png';
-import javascriptLogo from './assets/tech_logo/javascript.png';
-import reactjsLogo from './assets/tech_logo/reactjs.png';
-import reduxLogo from './assets/tech_logo/redux.png';
-import nextjsLogo from './assets/tech_logo/nextjs.png';
-import tailwindcssLogo from './assets/tech_logo/tailwindcss.png';
-import bootstrapLogo from './assets/tech_logo/bootstrap.png';
-import nodejsLogo from './assets/tech_logo/nodejs.png';
-import expressjsLogo from './assets/tech_logo/express.png';
-import mysqlLogo from './assets/tech_logo/mysql.png';
-import mongodbLogo from './assets/tech_logo/mongodb.png';
-import cLogo from './assets/tech_logo/c.png';
-import javaLogo from './assets/tech_logo/java.png';
-import pythonLogo from './assets/tech_logo/python.png';
-import typescriptLogo from './assets/tech_logo/typescript.png';
-import gitLogo from './assets/tech_logo/git.png';
-import githubLogo from './assets/tech_logo/github.png';
-import vscodeLogo from './assets/tech_logo/vscode.png';
-import postmanLogo from './assets/tech_logo/postman.png';
-import mcLogo from './assets/tech_logo/mc.png';
-import vercelLogo from './assets/tech_logo/vercel.png';
-import postgreLogo from './assets/tech_logo/postgre.png';
-import sqlLogo from './assets/tech_logo/sqlLogo.png';
+import htmlLogo from './assets/tech_logo/html.webp';
+import cssLogo from './assets/tech_logo/css.webp';
+import javascriptLogo from './assets/tech_logo/javascript.webp';
+import reactjsLogo from './assets/tech_logo/reactjs.webp';
+import reduxLogo from './assets/tech_logo/redux.webp';
+import nextjsLogo from './assets/tech_logo/nextjs.webp';
+import tailwindcssLogo from './assets/tech_logo/tailwindcss.webp';
+import bootstrapLogo from './assets/tech_logo/bootstrap.webp';
+import nodejsLogo from './assets/tech_logo/nodejs.webp';
+import expressjsLogo from './assets/tech_logo/express.webp';
+import mysqlLogo from './assets/tech_logo/mysql.webp';
+import mongodbLogo from './assets/tech_logo/mongodb.webp';
+import cLogo from './assets/tech_logo/c.webp';
+import javaLogo from './assets/tech_logo/java.webp';
+import pythonLogo from './assets/tech_logo/python.webp';
+import typescriptLogo from './assets/tech_logo/typescript.webp';
+import gitLogo from './assets/tech_logo/git.webp';
+import githubLogo from './assets/tech_logo/github.webp';
+import vscodeLogo from './assets/tech_logo/vscode.webp';
+import postmanLogo from './assets/tech_logo/postman.webp';
+import mcLogo from './assets/tech_logo/mc.webp';
+import vercelLogo from './assets/tech_logo/vercel.webp';
+import postgreLogo from './assets/tech_logo/postgre.webp';
+import sqlLogo from './assets/tech_logo/sqlLogo.webp';
 
 // Experience Section Logo's
-import Inlighn from './assets/company_logo/Inlighn.png';
-import Zidio from './assets/company_logo/Zidio.png';
-import androcoders from './assets/company_logo/androcoders.png';
+import Inlighn from './assets/company_logo/Inlighn.webp';
+import Zidio from './assets/company_logo/Zidio.webp';
+import androcoders from './assets/company_logo/androcoders.webp';
 
 // Education Section Logo's
-import upboard from './assets/education_logo/up_board.png';
-import allen from './assets/education_logo/allen.png';
+import upboard from './assets/education_logo/up_board.webp';
+import allen from './assets/education_logo/allen.webp';
 
 // Project Section Logo's
-import trendify from './assets/work_logo/trendify.png';
-import socialApp from './assets/work_logo/social-media.png';
-import prescripto from './assets/work_logo/prescripto.png';
-import pasteApp from './assets/work_logo/pasteapp.png';
-import imagesearchLogo from './assets/work_logo/image_search.png';
-import removebgLogo from './assets/work_logo/remove_bg.png';
+import trendify from './assets/work_logo/trendify.webp';
+import socialApp from './assets/work_logo/social-media.webp';
+import prescripto from './assets/work_logo/prescripto.webp';
+import pasteApp from './assets/work_logo/pasteapp.webp';
+import imagesearchLogo from './assets/work_logo/image_search.webp';
+import removebgLogo from './assets/work_logo/remove_bg.webp';
 
 
 export const SkillsInfo = [
@@ -54,7 +54,6 @@ export const SkillsInfo = [
       { name: 'Next JS', logo: nextjsLogo },
       { name: 'Tailwind CSS', logo: tailwindcssLogo },
       { name: 'Bootstrap', logo: bootstrapLogo },
-      { name: 'Next JS', logo: nextjsLogo },
     ],
   },
   {
@@ -161,7 +160,7 @@ export const education = [
     img: allen,
     school: "Allenhouse Institute Of Technology, Kanpur",
     date: "Sept 2022 - June 2026",
-    grade: "8.25 CGPA",
+    grade: "8.44 CGPA",
     desc: "I am pursuing a Bachelor of Technology (B.Tech) in Artificial Intelligence and Machine Learning from Allenhouse Institute of Technology, Kanpur Nagar. My studies have built a strong foundation in core computer science subjects including Data Structures and Algorithms, Operating Systems, DBMS, Computer Networks, and Software Engineering. Alongside academics, I have worked on practical web and full-stack development projects, strengthening my problem-solving skills and understanding of modern software development.",
     degree: "Bachelor of Technology - B.Tech CS(AIML)",
   },

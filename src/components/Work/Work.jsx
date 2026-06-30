@@ -1,333 +1,412 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef , useState} from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useMotionValue, useSpring, useTransform, motion } from "framer-motion";
 import { projects } from "../../constants";
-import { 
-  Code, 
-  ExternalLink, 
-  Github, 
-  X, 
-  Eye, 
-  Star, 
-  GitBranch,
-  Calendar,
-  FolderKanban,
-  ArrowUpRight,
-  Sparkles
-} from "lucide-react";
-import Tilt from 'react-parallax-tilt';
+import { ExternalLink, Github, FolderKanban } from "lucide-react";
 
-const Work = () => {
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [filter, setFilter] = useState("all");
+gsap.registerPlugin(ScrollTrigger);
 
-  // Get unique tags for filtering
-  const allTags = ["all", ...new Set(projects.flatMap(project => project.tags))];
+// Project metadata details mapping
+const projectMetadata = {
+  0: { role: "Lead Full Stack Developer", duration: "3 Months", status: "Production Ready", features: ["Dual Payment Gateways", "Admin dashboard control", "Responsive layout"] },
+  1: { role: "MERN Stack Engineer", duration: "2 Months", status: "Live", features: ["Real-time messaging", "JWT Auth & Session handling", "Cloudinary integration"] },
+  2: { role: "Frontend UI Developer", duration: "1 Month", status: "Completed", features: ["Online Appointment Booking", "Responsive doctors catalog", "Schedule management"] },
+  4: { role: "Full Stack Engineer", duration: "2 Months", status: "Live", features: ["Shareable snippets links", "Syntax highlighted input", "Snippet version control"] },
+  6: { role: "React Developer", duration: "1 Month", status: "Completed", features: ["Image search API", "Instant downloads engine", "Query filtering filters"] },
+  7: { role: "React Developer", duration: "1 Month", status: "Completed", features: ["Background removal API", "Download transparent image", "Canvas render canvas"] },
+};
 
-  // Filter projects based on selected tag
-  const filteredProjects = filter === "all" 
-    ? projects 
-    : projects.filter(project => project.tags.includes(filter));
-
-  const handleOpenModal = (project) => {
-    setSelectedProject(project);
-    document.body.style.overflow = 'hidden';
-  };
-
-  const handleCloseModal = () => {
-    setSelectedProject(null);
-    document.body.style.overflow = 'unset';
-  };
-
-  // Prevent card click when clicking on buttons
-  const handleButtonClick = (e, url) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  // Handle card click with proper event delegation
-  const handleCardClick = (e, project) => {
-    // Check if the click target is a button or inside a button
-    if (e.target.closest('button')) {
-      return; // Don't open modal if button was clicked
-    }
-    handleOpenModal(project);
-  };
-
+// Reusable Subcomponent: Project Info Detail Block
+const ProjectInfo = React.memo(({ project, index, totalProjects, meta }) => {
   return (
-    <section
-      id="work"
-      className="section-alternate relative py-20 px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 font-poppins min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
-    >
-      {/* Main Content */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm px-6 py-2 rounded-full border border-purple-500/30 mb-4">
-            <FolderKanban className="text-purple-400" size={18} />
-            <span className="text-sm font-medium text-gray-300">My Portfolio</span>
-          </div>
-          
-          <h2 className="text-4xl md:text-5xl font-bold mt-4 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-            Featured Projects
-          </h2>
-          
-          <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mt-4 rounded-full"></div>
-          
-          <p className="text-gray-400 mt-6 text-lg max-w-2xl mx-auto leading-relaxed">
-            A showcase of the projects I have worked on, highlighting my skills
-            and experience in various technologies
-          </p>
+    <div className="w-full md:w-5/12 flex flex-col justify-between space-y-4 text-white z-10">
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] uppercase font-mono tracking-widest text-[#00E5FF]">
+            Project {index + 1} of {totalProjects}
+          </span>
+          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">{meta.duration}</span>
         </div>
 
-        {/* Filter Tags */}
-        <div className="flex flex-wrap justify-center gap-3 mb-12">
-          {allTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setFilter(tag)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                filter === tag
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
-                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10'
-              }`}
-            >
-              {tag.charAt(0).toUpperCase() + tag.slice(1)}
-              {filter === tag && <Sparkles className="inline ml-2 w-3 h-3" />}
-            </button>
+        <h3 className="text-2xl font-bold font-mono tracking-tight text-white group-hover:text-orange-400 transition-colors">
+          {project.title}
+        </h3>
+
+        <span className="inline-block text-[11px] font-mono text-[#915EFF] font-bold uppercase tracking-wider">
+          {meta.role}
+        </span>
+
+        <p className="text-xs text-gray-300 leading-relaxed line-clamp-3 font-sans">
+          {project.description}
+        </p>
+      </div>
+
+      {/* Key Features */}
+      <div className="space-y-1.5">
+        <span className="text-[9px] uppercase font-mono tracking-widest text-gray-500">Key Features</span>
+        <ul className="text-[10px] font-mono text-gray-400 space-y-1">
+          {meta.features.map((feature, fIdx) => (
+            <li key={fIdx} className="flex items-center gap-1.5">
+              <span className="text-[#00E5FF]">✦</span> {feature}
+            </li>
           ))}
-        </div>
+        </ul>
+      </div>
 
-        {/* Projects Grid */}
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project) => (
-            <Tilt
-              key={project.id}
-              tiltMaxAngleX={5}
-              tiltMaxAngleY={5}
-              perspective={1000}
-              scale={1.02}
-              transitionSpeed={1500}
-              className="w-full h-full"
+      {/* Tech Stack */}
+      <div className="space-y-1.5">
+        <span className="text-[9px] uppercase font-mono tracking-widest text-gray-500">Tech Stack</span>
+        <div className="flex flex-wrap gap-1.5">
+          {project.tags.slice(0, 5).map((tag, idx) => (
+            <span
+              key={idx}
+              className="text-[9px] bg-white/[0.03] text-gray-300 px-2 py-1 rounded-md border border-white/5 font-mono"
             >
-              <div
-                onClick={(e) => handleCardClick(e, project)}
-                className="group relative h-full cursor-pointer"
-              >
-                {/* Card Border Glow */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
-                
-                {/* Main Card */}
-                <div className="relative h-full bg-gray-800/90 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 hover:border-transparent transition-all duration-500">
-                  
-                  {/* Image Container */}
-                  <div className="relative overflow-hidden h-48">
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent z-10"></div>
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                    />
-                    
-                    {/* Overlay Icons */}
-                    <div className="absolute top-4 right-4 z-20 flex gap-2">
-                      <div className="bg-black/50 backdrop-blur-sm p-2 rounded-full border border-white/10">
-                        <Eye className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-
-                    {/* Project Type Badge */}
-                    <div className="absolute bottom-4 left-4 z-20">
-                      <span className="bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 rounded-full text-xs font-semibold text-white shadow-lg">
-                        {project.tags[0]}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-5">
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 transition-all duration-300">
-                      {project.title}
-                    </h3>
-                    
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                      {project.description}
-                    </p>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.tags.slice(0, 3).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="text-xs bg-purple-500/10 text-purple-400 px-2 py-1 rounded-full border border-purple-500/20"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {project.tags.length > 3 && (
-                        <span className="text-xs bg-gray-700/50 text-gray-400 px-2 py-1 rounded-full">
-                          +{project.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Action Buttons - Code and Live Demo */}
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={(e) => handleButtonClick(e, project.github)}
-                        className="flex-1 flex items-center justify-center gap-2 bg-gray-700/50 hover:bg-gray-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 border border-gray-600 hover:border-purple-500/50 group/btn"
-                      >
-                        <Github className="w-4 h-4 group-hover/btn:rotate-12 transition-transform" />
-                        <span>Code</span>
-                      </button>
-                      <button
-                        onClick={(e) => handleButtonClick(e, project.webapp)}
-                        className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500 hover:to-pink-500 text-purple-400 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 border border-purple-500/30 hover:border-transparent group/btn"
-                      >
-                        <ExternalLink className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                        <span>Live Demo</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Tilt>
-          ))}
-        </div>
-
-        {/* Project Stats */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: <FolderKanban size={20} />, label: 'Total Projects', value: projects.length + '+' },
-            { icon: <Code size={20} />, label: 'Technologies Used', value: '30+' },
-            { icon: <Star size={20} />, label: 'GitHub Stars', value: '50+' },
-            { icon: <GitBranch size={20} />, label: 'Repo Forks', value: '55+' }
-          ].map((stat, index) => (
-            <div 
-              key={index}
-              className="group relative text-center p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-2"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 rounded-xl transition-all duration-500"></div>
-              
-              <div className="relative">
-                <div className="text-purple-400 text-xl mb-2 flex justify-center">
-                  {stat.icon}
-                </div>
-                <div className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  {stat.value}
-                </div>
-                <div className="text-xs font-medium text-gray-400 mt-1">
-                  {stat.label}
-                </div>
-              </div>
-            </div>
+              {tag}
+            </span>
           ))}
         </div>
       </div>
+    </div>
+  );
+});
 
-      {/* Project Modal */}
-      {selectedProject && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={handleCloseModal}
+// Reusable Subcomponent: Project Visual Showcase & CTAs
+const ProjectImage = React.memo(({ project, meta }) => {
+  return (
+    <div className="w-full md:w-7/12 flex flex-col justify-between gap-4 z-10">
+      <div className="relative flex-1 rounded-2xl overflow-hidden border border-white/5 group/img min-h-[200px] md:min-h-0">
+        <img
+          src={project.image}
+          alt={project.title}
+          loading="lazy"
+          className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0618]/90 via-transparent to-transparent opacity-60 pointer-events-none" />
+
+        {/* Active status indicator */}
+        <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-[#050505]/85 border border-[#00E5FF]/30 text-[9px] font-bold font-mono tracking-widest text-[#00E5FF] uppercase shadow-[0_0_10px_rgba(0,229,255,0.15)] animate-pulse">
+          {meta.status}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <a
+          href={project.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex-1 py-3 bg-white/5 border border-white/10 text-xs text-white rounded-xl font-bold font-mono flex items-center justify-center gap-1.5 hover:bg-white/10 hover:border-[#915EFF]/50 transition-all hover:-translate-y-0.5"
         >
-          <div 
-            className="relative w-full max-w-4xl bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header with Close Button */}
-            <div className="absolute top-4 right-4 z-30">
-              <button
-                onClick={handleCloseModal}
-                className="bg-black/50 backdrop-blur-sm p-2 rounded-full border border-white/10 hover:border-purple-500/50 transition-all duration-300 group"
-              >
-                <X className="w-5 h-5 text-gray-400 group-hover:text-white" />
-              </button>
-            </div>
+          <Github size={14} /> Repository
+        </a>
+        <a
+          href={project.webapp}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex-1 py-3 bg-[#00E5FF]/10 border border-[#00E5FF]/20 text-xs text-[#00E5FF] rounded-xl font-bold font-mono flex items-center justify-center gap-1.5 hover:bg-[#00E5FF]/20 hover:border-[#00E5FF]/50 transition-all hover:-translate-y-0.5 shadow-[0_0_15px_rgba(0,229,255,0.05)]"
+        >
+          <ExternalLink size={14} /> Live Demo
+        </a>
+      </div>
+    </div>
+  );
+});
 
-            {/* Modal Content */}
-            <div className="flex flex-col lg:flex-row">
-              {/* Image Section */}
-              <div className="lg:w-1/2 relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10"></div>
-                <img
-                  src={selectedProject.image}
-                  alt={selectedProject.title}
-                  className="w-full h-64 lg:h-full object-cover"
-                />
-                
-                {/* Tags Overlay */}
-                <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-                  {selectedProject.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="bg-black/50 backdrop-blur-sm text-xs font-semibold text-purple-400 px-3 py-1 rounded-full border border-purple-500/30"
+// Reusable Subcomponent: Interactive Project Card Wrapper
+const ProjectCard = React.forwardRef(({ project, index, totalProjects }, ref) => {
+  const innerRef = useRef(null);
+
+  // Mouse 3D hover tilt dynamics (Framer Motion does not cause parent React re-renders)
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [8, -8]), { damping: 25, stiffness: 200 });
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-8, 8]), { damping: 25, stiffness: 200 });
+
+  const handleMouseMove = (e) => {
+    if (!innerRef.current) return;
+    const rect = innerRef.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left - width / 2;
+    const mouseY = e.clientY - rect.top - height / 2;
+    x.set(mouseX / width);
+    y.set(mouseY / height);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  const meta = projectMetadata[project.id] || { role: "Software Developer", duration: "Ongoing", status: "Live", features: ["Scalable architecture"] };
+
+  // Combine standard ref with GSAP target ref
+  const setRefs = (node) => {
+    innerRef.current = node;
+    if (ref) {
+      if (typeof ref === "function") ref(node);
+      else ref.current = node;
+    }
+  };
+
+  return (
+    <motion.div
+      ref={setRefs}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transformStyle: "preserve-3d",
+        rotateX,
+        rotateY,
+        willChange: "transform, opacity, filter",
+        zIndex: totalProjects - index,
+      }}
+      className="project-card absolute w-[90vw] max-w-[1400px] h-[80vh] bg-[#0b0618]/85 border border-white/5 hover:border-orange-500/35 rounded-[28px] p-6 lg:p-8 flex flex-col md:flex-row gap-8 shadow-[0_30px_60px_rgba(0,0,0,0.85)] backdrop-blur-3xl transition-shadow duration-300 group overflow-hidden cursor-pointer"
+    >
+      {/* Glow corner accents */}
+      <div className="absolute -top-20 -right-20 w-44 h-44 bg-[#915EFF]/10 rounded-full blur-3xl pointer-events-none group-hover:bg-[#915EFF]/15 transition-all" />
+      <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-[#00E5FF]/10 rounded-full blur-3xl pointer-events-none group-hover:bg-[#00E5FF]/15 transition-all" />
+
+      <ProjectInfo project={project} index={index} totalProjects={totalProjects} meta={meta} />
+      <ProjectImage project={project} meta={meta} />
+    </motion.div>
+  );
+});
+
+// Reusable Subcomponent: Project Stack Deck Scene
+const ProjectStack = ({ cardRefs }) => {
+  return (
+    <div className="relative w-[90vw] max-w-[1400px] mx-auto h-[80vh] flex items-center justify-center overflow-visible">
+      {projects.map((project, idx) => (
+        <ProjectCard
+          key={project.id}
+          project={project}
+          index={idx}
+          totalProjects={projects.length}
+          ref={(el) => (cardRefs.current[idx] = el)}
+        />
+      ))}
+    </div>
+  );
+};
+
+const Work = () => {
+  const containerRef = useRef(null);
+  const cardRefs = useRef([]);
+  const hudProgressRef = useRef(null);
+
+  useEffect(() => {
+    // Detect mobile viewports to disable GSAP ScrollTrigger completely
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) return;
+
+    const cards = cardRefs.current.filter(Boolean);
+    if (!cards.length) return;
+
+    // 1. Initial Stack State
+    gsap.set(cards, (i) => {
+      const scale = Math.max(0.88, 1 - i * 0.03);
+      const y = i * 30;
+      const opacity = Math.max(0.7, 1 - i * 0.1);
+      const blur = `blur(${i}px)`;
+      return { scale, y, opacity, filter: blur };
+    });
+
+    // 2. Master GSAP ScrollTrigger Timeline
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: `+=${(projects.length - 1) * 100}%`,
+        pin: true,
+        scrub: 1,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        fastScrollEnd: true,
+        snap: {
+          snapTo: "labels",
+          duration: { min: 0.2, max: 0.5 },
+          delay: 0.1,
+          ease: "power1.inOut",
+        },
+        onUpdate: (self) => {
+          // Dynamic HUD page counter update directly on DOM to prevent React re-renders
+          if (hudProgressRef.current) {
+            const calculatedIndex = Math.min(
+              Math.floor(self.progress * (projects.length - 1)),
+              projects.length - 1
+            );
+            hudProgressRef.current.innerText = String(calculatedIndex + 1).padStart(2, "0");
+          }
+        },
+      },
+    });
+
+    // 3. Staggered card shifts transitions
+    for (let i = 0; i < cards.length - 1; i++) {
+      const label = `card${i + 1}`;
+      tl.addLabel(label);
+
+      // Animate active card up and out of the viewport
+      tl.to(
+        cards[i],
+        {
+          y: "-110vh",
+          scale: 1.05,
+          opacity: 0,
+          rotate: -2,
+          filter: "blur(4px)",
+          ease: "none",
+        },
+        label
+      );
+
+      // Shift subsequent cards forward in the stack
+      for (let j = i + 1; j < cards.length; j++) {
+        const slotIdx = j - (i + 1);
+        const nextScale = Math.max(0.88, 1 - slotIdx * 0.03);
+        const nextY = slotIdx * 30;
+        const nextOpacity = Math.max(0.7, 1 - slotIdx * 0.1);
+        const nextBlur = `blur(${slotIdx}px)`;
+
+        tl.to(
+          cards[j],
+          {
+            scale: nextScale,
+            y: nextY,
+            opacity: nextOpacity,
+            filter: nextBlur,
+            ease: "none",
+          },
+          label
+        );
+      }
+    }
+    // Add final label for snapping the last card
+    tl.addLabel(`card${cards.length}`);
+
+    // 4. Synchronize ScrollTrigger with Lenis ticker
+    const syncScroll = () => {
+      ScrollTrigger.update();
+    };
+    gsap.ticker.add(syncScroll);
+
+    return () => {
+      // Cleanup GSAP listeners and timelines
+      gsap.ticker.remove(syncScroll);
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
+  }, []);
+
+  // Check viewport width for layout swap
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileLayout(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <section
+      ref={containerRef}
+      id="work"
+      className="relative w-full bg-[#050505] overflow-visible"
+      style={{
+        minHeight: "100vh",
+      }}
+    >
+      {/* Immersive background accents */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(145,94,255,0.03),transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(0,229,255,0.02),transparent_50%)] pointer-events-none" />
+
+      {isMobileLayout ? (
+        // Mobile Layout: Swipeable Horizontal Carousel
+        <div className="py-24 px-6 space-y-12">
+          {/* Header */}
+          <div className="text-center relative">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#915EFF]/10 border border-[#915EFF]/30 text-xs text-gray-300 font-mono">
+              <FolderKanban size={14} className="text-[#915EFF]" /> My Portfolio
+            </div>
+            <h2 className="text-2xl font-bold font-mono tracking-tight text-white mt-4">
+              Featured Work
+            </h2>
+            <div className="w-16 h-1 bg-gradient-to-r from-[#915EFF] to-[#00E5FF] mx-auto mt-3 rounded-full" />
+          </div>
+
+          {/* Horizontal scroll container */}
+          <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-thin">
+            {projects.map((project, idx) => {
+              const meta = projectMetadata[project.id] || { role: "Developer", duration: "Ongoing", status: "Live" };
+              return (
+                <div
+                  key={project.id}
+                  className="w-[85vw] shrink-0 snap-center bg-[#0b0618]/90 border border-white/5 rounded-2xl p-5 space-y-4"
+                >
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="w-full h-40 object-cover rounded-xl border border-white/5"
+                  />
+                  <h3 className="text-lg font-bold text-white font-mono">{project.title}</h3>
+                  <p className="text-xs text-gray-400 line-clamp-3 font-sans leading-relaxed">
+                    {project.description}
+                  </p>
+                  <div className="flex gap-2.5">
+                    <a
+                      href={project.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 bg-white/5 border border-white/10 text-[10px] text-white rounded-lg font-bold font-mono flex items-center justify-center gap-1"
                     >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Details Section */}
-              <div className="lg:w-1/2 p-8">
-                <h3 className="text-3xl font-bold text-white mb-4">
-                  {selectedProject.title}
-                </h3>
-                
-                <p className="text-gray-400 mb-6 leading-relaxed">
-                  {selectedProject.description}
-                </p>
-
-                {/* Project Features (if available) */}
-                {selectedProject.features && (
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-3">Key Features:</h4>
-                    <ul className="space-y-2">
-                      {selectedProject.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-gray-400">
-                          <Sparkles className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-4 mt-8">
-                  <a
-                    href={selectedProject.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-xl transition-all duration-300 group"
-                  >
-                    <Github className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                    <span>Code</span>
-                  </a>
-                  <a
-                    href={selectedProject.webapp}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl transition-all duration-300 group"
-                  >
-                    <ExternalLink className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    <span>Live Demo</span>
-                  </a>
-                </div>
-
-                {/* Additional Info */}
-                <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between text-sm text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>Completed 2025</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Code className="w-4 h-4" />
-                    <span>Full Stack</span>
+                      Repository
+                    </a>
+                    <a
+                      href={project.webapp}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 bg-[#00E5FF]/10 border border-[#00E5FF]/20 text-[10px] text-[#00E5FF] rounded-lg font-bold font-mono flex items-center justify-center gap-1"
+                    >
+                      Live Demo
+                    </a>
                   </div>
                 </div>
-              </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        // Desktop Layout: GSAP-Pinned Stack
+        <div className="sticky top-0 h-screen w-full flex flex-col justify-center overflow-hidden z-10 px-6 lg:px-16">
+          {/* Header inside Sticky Container */}
+          <div className="text-center mb-8 relative">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#915EFF]/10 border border-[#915EFF]/30 text-sm text-gray-300 font-mono">
+              <FolderKanban size={16} className="text-[#915EFF]" /> My Portfolio
             </div>
+            <h2 className="section-title mt-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-[#00E5FF] font-mono tracking-tight shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+              Featured Projects
+            </h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-[#915EFF] to-[#00E5FF] mx-auto mt-4 rounded-full shadow-[0_0_8px_rgba(0,229,255,0.3)]" />
+          </div>
+
+          {/* Absolute Stack Container */}
+          <ProjectStack cardRefs={cardRefs} />
+
+          {/* Scroll Progress HUD */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs font-mono text-gray-500 z-20">
+            <span>PROJECT</span>
+            <span ref={hudProgressRef} className="text-[#00E5FF] font-bold">
+              01
+            </span>
+            <span>/</span>
+            <span>{String(projects.length).padStart(2, "0")}</span>
           </div>
         </div>
       )}
